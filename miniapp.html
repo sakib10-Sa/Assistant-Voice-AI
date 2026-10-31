@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Voice Panel</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>:root{--bg:#000;--card:#1c1c1e;--card2:#2c2c2e;--fill:rgba(118,118,128,.24);--ac:#0a84ff;--ok:#30d158;--tx:#fff;--mut:#98989f;--red:#ff453a;--r:14px;--line:rgba(255,255,255,.09);--blur:blur(20px) saturate(1.6);color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html{background:var(--bg);-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;min-height:100dvh;color:var(--tx);font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:0 0 calc(84px + env(safe-area-inset-bottom))}
+body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(70vmax 50vmax at 0 0,rgba(10,132,255,.17),transparent 70%),radial-gradient(70vmax 50vmax at 100% 100%,rgba(94,92,230,.17),transparent 70%)}
+header{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;background:rgba(18,18,20,.72);border-bottom:.5px solid var(--line);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+header select{width:auto;flex:1;min-width:0}header .btn{flex:none}
+select,input[type=text],input[type=password],input[type=number],textarea{width:100%;padding:11px 12px;border:0;border-radius:10px;background-color:var(--fill);color:var(--tx);font:inherit;font-size:16px;outline:0;transition:box-shadow .15s}
+select{-webkit-appearance:none;appearance:none;padding-right:32px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%2398989f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+select option{background:#2c2c2e;color:#fff}
+select:focus,input:focus,textarea:focus{box-shadow:0 0 0 2px var(--ac)}
+::placeholder{color:#6e6e73}
+main{padding:12px 14px;max-width:640px;margin:0 auto;animation:in .25s ease}
+header[hidden]+main{padding-top:calc(14px + env(safe-area-inset-top))}
+@keyframes in{from{opacity:0}}
+.bento{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px}
+@media(min-width:640px){.bento{grid-template-columns:repeat(4,1fr)}}
+.card,.panel{background:var(--card);border-radius:var(--r);padding:14px;min-width:0}
+.s2{grid-column:span 2}.s4{grid-column:1/-1}
+.big{font-size:26px;font-weight:700;color:var(--ac);line-height:1.1}.mut{color:var(--mut);font-size:13px}
+h4{margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;min-height:44px}.row+.row{border-top:.5px solid var(--line)}
+.btn{border:0;border-radius:12px;padding:11px 14px;background:var(--fill);color:var(--tx);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s}
+.btn:active{opacity:.6}.btn:disabled{opacity:.5}
+.btn.pri,.btn.on{background:var(--ac);color:#fff}
+.btn.red{color:var(--red)}.btn.sm{padding:7px 11px;font-size:13px;border-radius:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.sw{position:relative;width:51px;height:31px;flex:none}.sw input{display:none}
+.sw i{position:absolute;inset:0;background:rgba(120,120,128,.32);border-radius:16px;transition:background .25s}
+.sw i:after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;transition:transform .25s;box-shadow:0 2px 4px rgba(0,0,0,.35)}
+.sw input:checked+i{background:var(--ok)}.sw input:checked+i:after{transform:translateX(20px)}
+input[type=range]{width:100%;accent-color:var(--ac);margin:8px 0 0}
+.bars{display:flex;align-items:flex-end;gap:6px;height:64px}.bars div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;height:100%}
+.bars b{width:100%;background:linear-gradient(180deg,var(--ac),rgba(10,132,255,.4));border-radius:6px 6px 2px 2px;min-height:3px;transition:height .4s}.bars span{font-size:10px;color:var(--mut)}
+.pb{height:6px;border-radius:3px;background:var(--fill);overflow:hidden;margin:4px 0 8px}.pb b{display:block;height:100%;background:var(--ac)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:2px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:rgba(20,20,22,.78);border-top:.5px solid var(--line);z-index:6;-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+nav button{flex:1;max-width:120px;border:0;background:none;color:var(--mut);padding:4px 0;font-family:inherit;font-weight:500;font-size:11px;border-radius:10px;transition:color .2s}nav button span{display:block;font-size:22px;line-height:1.2}
+nav button.on{color:var(--ac)}
+.item{display:flex;gap:8px;align-items:center;padding:9px 0}.item+.item{border-top:.5px solid var(--line)}.item .t{flex:1;min-width:0}.item .t div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{display:inline-block;padding:3px 9px;border-radius:20px;background:var(--fill);font-size:12px;color:var(--mut)}.tag.ok{color:var(--ok)}.tag.bad{color:var(--red)}
+.alert{background:rgba(255,69,58,.14);box-shadow:inset 0 0 0 1px rgba(255,69,58,.4)}.alert b{color:var(--red)}.alert div{font-size:13px;margin-top:2px}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,10px);background:rgba(58,58,60,.97);color:#fff;font-size:14px;font-weight:600;text-align:center;max-width:88vw;padding:10px 18px;border-radius:22px;opacity:0;transition:.25s;pointer-events:none;z-index:20}#toast.on{opacity:1;transform:translate(-50%,0)}
+.sheet{position:fixed;inset:0;z-index:15;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5);animation:fd .2s}
+.sheet .panel{width:100%;max-width:560px;margin:0 8px calc(8px + env(safe-area-inset-bottom));background:var(--card2);border-radius:20px;animation:up .28s cubic-bezier(.2,.9,.3,1)}
+@keyframes fd{from{opacity:0}}@keyframes up{from{transform:translateY(40px);opacity:0}}
+.center{text-align:center;padding:30px 14px}.center .big{font-size:20px;color:var(--tx);margin-bottom:8px}label.l{display:block;margin:12px 0 4px;color:var(--mut);font-size:13px}
+.g{display:grid;gap:8px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1.4fr 1fr 1fr}
+details summary{cursor:pointer;color:var(--mut);font-size:13px;padding:4px 0}
+.login{margin-top:6vh;text-align:center;padding:26px 20px}.login .lock{font-size:40px;margin-bottom:6px}
+.login .big{font-size:24px;background:linear-gradient(90deg,#7d7aff,#32d2ff);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
+.login label.l{text-align:left}.login .btn{width:100%;margin-top:18px;padding:14px;font-size:16px;background:linear-gradient(135deg,#6e6bff,#32d2ff);color:#04131f}
+.login .hint{margin-top:14px;font-size:12px}.note{margin:12px 0 0;padding:9px 12px;border-radius:10px;background:rgba(255,159,10,.14);color:#ffb340;font-size:13px}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){header,nav{background:#141416}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style></head>
+<body>
+<header id="hd" hidden><select id="chat"></select><button class="btn pri" id="sv" onclick="saveNow()">💾 Save</button></header>
+<main id="m"><div class="center mut">Loading…</div></main>
+<nav id="nv" hidden></nav><div id="toast"></div><div id="sh" class="sheet" hidden onclick="if(event.target==this)vClose()"></div>
+<script>
+const tg=(window.Telegram&&Telegram.WebApp)||{initData:'',ready(){},expand(){}};tg.ready();tg.expand();try{tg.setHeaderColor('#000000');tg.setBackgroundColor('#000000');tg.setBottomBarColor&&tg.setBottomBarColor('#141416')}catch(e){}
+const $=s=>document.querySelector(s),ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k):v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let S={},cur=null,tab='home',tm,D={},live=false,hist=[],hfav=false,lt;
+const hdr=()=>({...(tg.initData?{'X-Init':tg.initData}:{}),...(ls('vb_t')?{'X-Token':ls('vb_t')}:{})});
+async function api(p,b,raw){const o={headers:{...hdr(),'Content-Type':'application/json'}};if(b!==undefined){o.method='POST';o.body=JSON.stringify(b)}
+  const r=await fetch(p,o);if(!r.ok){const e=new Error((await r.text())||r.status);e.status=r.status;throw e}return raw?r:r.json()}
+function toast(t,bad){const e=$('#toast');e.textContent=t||'Saved ✓';e.style.background=bad?'var(--red)':'';e.classList.add('on');clearTimeout(lt);lt=setTimeout(()=>e.classList.remove('on'),bad?3800:1400)}
+const C=()=>(S.chats||[]).find(c=>c.id==cur);
+const TABS=[['home','📊','Home'],['targets','🎯','Targets'],['voice','🎙','Voice'],['hist','🕘','History'],['more','⚙️','More']];
+
+async function load(keep){
+  try{S=await api('/api/state')}catch(e){
+    if(e.status==401||e.status==403)return loginView();
+    $('#hd').hidden=$('#nv').hidden=true;
+    return $('#m').innerHTML='<div class="card center"><div class="big">Could not load the panel</div><div class="mut">Check your connection, then try again.</div><br><button class="btn pri" onclick="load()">Try again</button></div>'}
+  if(S.role!=='owner'&&S.role!=='admin')return loginView(S.role=='pending');
+  $('#hd').hidden=$('#nv').hidden=false;
+  if(!C())cur=S.chats[0]?.id;
+  $('#chat').innerHTML=(S.chats||[]).map(c=>`<option value="${c.id}" ${c.id==cur?'selected':''}>${esc(c.title||c.id)}</option>`).join('');
+  render()}
+function loginView(pending){$('#hd').hidden=$('#nv').hidden=true;
+  $('#m').innerHTML=`<div class="card login"><div class="lock">🔐</div><div class="big">Secure Login</div><div class="mut">Admin Control Panel</div>
+  ${pending?'<div class="note">Your access is waiting for owner approval.</div>':''}
+  <label class="l">Username</label><input type="text" id="lu" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Username">
+  <label class="l">Password</label><input type="password" id="lp" autocomplete="current-password" placeholder="Password" onkeydown="if(event.key=='Enter')doLogin()">
+  <button class="btn pri" id="lb" onclick="doLogin()">Unlock Panel</button>
+  <div class="mut hint">Only approved admins can sign in. Ask the owner if you need access.</div></div>`}
+async function doLogin(){const b=$('#lb');b.disabled=true;
+  try{const r=await api('/api/login',{username:$('#lu').value,password:$('#lp').value});ls('vb_t',r.token);load()}
+  catch(e){b.disabled=false;toast((e.message||'Login failed').slice(0,80),1)}}
+
+function render(){
+  $('#nv').innerHTML=TABS.map(([k,i,n])=>`<button class="${k==tab?'on':''}" onclick="tab='${k}';render()"><span>${i}</span>${n}</button>`).join('');
+  const c=C();if(!c){$('#m').innerHTML='<div class="center"><div class="big">No groups yet</div><div class="mut">Add the bot to a group and send one message there. The group will then show up here. You must be an admin of that group.</div></div>'+(tab=='more'?V.more():'');return}
+  $('#m').innerHTML=V[tab]();if(tab=='hist')loadHist()}
+$('#chat').onchange=async e=>{await saveNow();cur=e.target.value;render()};
+
+function set(k,v,re){C().s[k]=v;mark(k);if(re)render()}
+function mark(k){(D[cur]=D[cur]||{})[k]=1;$('#sv').textContent='● Unsaved';clearTimeout(tm);tm=setTimeout(saveNow,700)}
+async function saveNow(){clearTimeout(tm);const id=cur,c=C(),ks=Object.keys(D[id]||{});if(!c||!ks.length)return;D[id]={};
+  try{await api('/api/save',{chat_id:id,patch:Object.fromEntries(ks.map(k=>[k,c.s[k]]))});$('#sv').textContent='💾 Save';toast()}catch(e){ks.forEach(k=>D[id][k]=1);$('#sv').textContent='● Unsaved';toast('Save failed',1)}}
+const ask=(m,f)=>tg.initData&&tg.showConfirm?tg.showConfirm(m,ok=>ok&&f()):confirm(m)&&f();
+const tog=(k,l)=>`<div class="row"><span>${l}</span><label class="sw"><input type="checkbox" ${C().s[k]?'checked':''} onchange="set('${k}',this.checked)"><i></i></label></div>`;
+const sld=(k,l,a,b,u='')=>`<div style="padding:6px 0"><div class="row" style="padding:0"><span>${l}</span><b id="v_${k}" style="color:var(--ac)">${C().s[k]}${u}</b></div><input type="range" min="${a}" max="${b}" value="${C().s[k]}" oninput="$('#v_${k}').textContent=this.value+'${u}'" onchange="set('${k}',+this.value);autoPrev()"></div>`;
+const sel=(k,l,o)=>`<div class="row"><span>${l}</span><select style="width:58%" onchange="set('${k}',this.value,${k=='provider'||k=='lang'});autoPrev()">${o.map(([v,t])=>`<option value="${esc(v)}" ${C().s[k]==v?'selected':''}>${esc(t)}</option>`).join('')}</select></div>`;
+const vname=v=>v.split('-').slice(2).join(' ').replace('Neural','')+' ('+v.slice(0,5)+')';
+
+const SHORT={quota:'Out of credits',auth:'Key rejected',rate:'Rate limited',voice:'Voice ID problem',server:'Unreachable',other:'Error',config:'Not set'};
+const FIX={quota:'Credits or monthly quota used up. Add credits, or switch provider in Voice > Provider.',auth:'The API key was rejected. Check the key in your server settings.',rate:'Too many requests right now. This usually clears by itself.',voice:'The voice ID was not accepted. Check it in Voice > Voice library.',server:'The service is unreachable right now. It usually recovers by itself.',other:'The last request failed.'};
+const PN={cartesia:'Cartesia',elevenlabs:'ElevenLabs'};
+const bad=p=>S.keys[p]&&(S.status||{})[p]&&S.status[p].ok===false;
+const alerts=()=>['cartesia','elevenlabs'].filter(bad).map(p=>`<div class="card s4 alert"><b>${PN[p]}: ${SHORT[S.status[p].kind]||'Error'}</b><div>${FIX[S.status[p].kind]||FIX.other}</div></div>`).join('');
+const keyTag=p=>!S.keys[p]?`<span class="tag">${PN[p]} · Not set</span>`:bad(p)?`<span class="tag bad">${PN[p]} · ${SHORT[S.status[p].kind]||'Error'}</span>`:`<span class="tag ok">${PN[p]} · Ready</span>`;
+
+const V={
+home(){const c=C(),st=c.stats,mx=Math.max(1,...st.daily.map(d=>d[1])),tp=Object.values(st.prov).reduce((a,b)=>a+b,0)||1;
+ return `<div class="bento">${alerts()}
+ <div class="card"><div class="big">${st.voices}</div><div class="mut">Voices</div></div>
+ <div class="card"><div class="big">${st.chars>9999?(st.chars/1000).toFixed(1)+'k':st.chars}</div><div class="mut">Characters</div></div>
+ <div class="card s2"><div class="row" style="padding:0"><div><b>Bot status</b><div class="mut">${c.pending} queued</div></div><label class="sw"><input type="checkbox" ${c.s.enabled?'checked':''} onchange="set('enabled',this.checked)"><i></i></label></div></div>
+ <div class="card s2"><h4>Last 7 days</h4><div class="bars">${st.daily.length?st.daily.map(d=>`<div><b style="height:${Math.max(4,d[1]/mx*100)}%"></b><span>${d[0].slice(8)}</span></div>`).join(''):'<span class="mut">No data yet</span>'}</div></div>
+ <div class="card s2"><h4>Providers used</h4>${Object.entries(st.prov).map(([k,n])=>`<div class="mut" style="display:flex;justify-content:space-between"><span>${esc(k)}</span><span>${n}</span></div><div class="pb"><b style="width:${n/tp*100}%"></b></div>`).join('')||'<span class="mut">No data yet</span>'}</div>
+ <div class="card s4"><h4>Voice services</h4><div class="chips">${keyTag('cartesia')}${keyTag('elevenlabs')}<span class="tag ok">Edge TTS · Ready</span><span class="tag ${S.backup?'ok':''}">Backup ${S.backup?'On':'Off'}</span></div></div>
+ <button class="btn pri" onclick="act('send')">▶ Send now</button><button class="btn" onclick="act('clear')">🗑 Clear queue</button></div>
+ <button class="btn s4" style="width:100%" onclick="load()">↻ Refresh</button>`},
+targets(){const c=C();return `<div class="bento"><div class="card s4"><h4>Who gets voice replies</h4>
+ ${tog('only_listed','Only reply to listed users')}${sld('default_timer','Wait before sending',1,120,'s')}</div>
+ <div class="card s4"><h4>Listed users (wait time)</h4>${Object.entries(c.s.timers).map(([n,t])=>`<div class="item"><b class="t">@${esc(n)}</b><input type="number" min="1" style="width:76px" value="${t}" data-n="${esc(n)}" onchange="setT(this.dataset.n,this.value)"><button class="btn sm red" data-n="${esc(n)}" onclick="delT(this.dataset.n)">✕</button></div>`).join('')||'<div class="mut">No users listed yet</div>'}
+ <div class="item"><input type="text" id="nu" class="t" placeholder="@username"><input type="number" id="ns" style="width:76px" value="15" min="1"><button class="btn sm pri" onclick="addT()">＋</button></div></div>
+ <div class="card s4"><h4>Ignored users (comma separated)</h4><textarea rows="2" onchange="set('ignore',this.value.split(',').map(x=>x.trim().replace(/^@/,'')).filter(Boolean))">${esc(c.s.ignore.join(', '))}</textarea></div></div>`},
+voice(){const c=C(),s=c.s,P={normal:'Normal',deep:'Deep',robot:'Robot',child:'Child',deep_robot:'Deep Robot'},ids=[['cartesia','bn','Cartesia Bangla'],['cartesia','en','Cartesia English'],['elevenlabs','bn','ElevenLabs Bangla'],['elevenlabs','en','ElevenLabs English']];
+ return `<div class="bento"><div class="card s4"><h4>Engine</h4>${sel('provider','Provider',S.providers.map(p=>[p,{both:'Auto (Cartesia, then ElevenLabs)',cartesia:'Cartesia',elevenlabs:'ElevenLabs',edge:'Edge TTS'}[p]]))}
+ ${sel('lang','Language',[['auto','Auto detect'],['bn','Bangla'],['en','English']])}</div>
+ <div class="card s4"><h4>Voice style</h4><div class="chips">${S.presets.map(p=>`<button class="btn sm ${s.preset==p?'on':''}" onclick="set('preset','${p}',1);autoPrev()">${P[p]||p}</button>`).join('')}</div>
+ ${tog('preset_edge','Use Edge TTS for voice styles (real pitch control)')}<div class="mut">Deep/Robot/Child presets may not apply identical pitch effects on every API provider. Select Edge explicitly only when you want Edge TTS.</div></div>
+ <div class="card s4"><h4>Tuning</h4>${sld('rate','Speed',-50,100,'%')}${sld('pitch','Pitch (Edge)',-50,50,'Hz')}${sld('volume','Volume',-50,50,'%')}
+ <div class="row"><span>Live preview on change</span><label class="sw"><input type="checkbox" ${live?'checked':''} onchange="live=this.checked"><i></i></label></div>
+ <input type="text" id="pt" value="Hello! This is a test voice."><br><br><button class="btn pri" style="width:100%" onclick="prev()">🔊 Preview</button></div>
+ <div class="card s4"><div class="row" style="padding:0"><h4 style="margin:0">Voice library</h4><button class="btn sm pri" onclick="vSheet()">＋ Add voice</button></div><div class="mut" style="margin:4px 0 6px">Shared by all groups. “Use” applies to: <b>${esc(c.title||'Global')}</b></div>
+ ${(S.voice_lib||[]).map(v=>{const on=s[v.prov+'_voice_'+v.lang]==v.id;return `<div class="item"><div class="t"><div><b>${esc(v.name)}</b> ${on?'<span class="tag ok">active</span>':''}</div><div class="mut">${v.prov} · ${v.lang} · ${esc(v.id.slice(0,12))}…</div></div><button class="btn sm ${on?'on':''}" onclick="useV('${v.k}')">Use</button><button class="btn sm" onclick="vSheet('${v.k}')">✎</button><button class="btn sm red" onclick="delV('${v.k}')">✕</button></div>`}).join('')||'<div class="mut">Library is empty</div>'}
+ <details><summary>Direct voice ID fields</summary>${ids.map(([p,l,n])=>`<label class="l">${n}</label><input type="text" value="${esc(s[p+'_voice_'+l]||'')}" placeholder="voice ID" onchange="set('${p}_voice_${l}',this.value.trim())">`).join('')}</details></div>
+ <div class="card s4"><h4>Edge voices</h4>${sel('voice_bn','Bangla',S.voices.bn.map(v=>[v,vname(v)]))}${sel('voice_en','English',S.voices.en.map(v=>[v,vname(v)]))}</div></div>`},
+hist(){return `<div class="bento"><div class="card s4"><div class="chips"><button class="btn sm ${hfav?'':'on'}" onclick="hfav=false;render()">All</button><button class="btn sm ${hfav?'on':''}" onclick="hfav=true;render()">⭐ Favorites</button></div><div id="hl" style="margin-top:6px"><div class="mut">Loading…</div></div></div></div>`},
+more(){const c=C(),own=S.role=='owner';return `<div class="bento">${c?`<div class="card s4"><h4>Filters</h4>${tog('read_names','Read sender name aloud')}${tog('strip_links','Replace links with the word link')}${tog('strip_emoji','Remove emojis')}${tog('caption','Add text caption to voice')}${tog('reply','Reply directly to the message')}${sld('min_chars','Minimum characters',1,100)}${sld('max_chars','Max characters per voice',200,20000)}</div>`:''}
+ ${c&&cur!='__global__'?`<div class="card s4"><button class="btn red" style="width:100%" onclick="resetChat()">↺ Reset this group to global defaults</button></div>`:''}
+ <div class="card s4"><h4>Browser login</h4><div class="mut">${S.login?'Current username: <b>'+esc(S.login)+'</b>':'Not set'}</div><div class="g g2"><input type="text" id="au" placeholder="username" value="${esc(S.login)}"><input type="password" id="ap" placeholder="password (min 8)"></div><br><div class="g g2"><button class="btn pri" onclick="setCreds()">Save login</button>${ls('vb_t')?'<button class="btn red" onclick="ls(\'vb_t\',null);load()">Logout</button>':'<span></span>'}</div></div>
+ ${own?`<div class="card s4"><h4>Admin approvals</h4>${(S.requests||[]).map(r=>`<div class="item"><div class="t"><div><b>${esc(r.name)}</b> @${esc(r.username)}</div><div class="mut">ID ${r.uid}</div></div><button class="btn sm pri" onclick="adm('approve',${r.uid})">Approve</button><button class="btn sm red" onclick="adm('deny',${r.uid})">Deny</button></div>`).join('')||'<div class="mut">No pending requests</div>'}
+ <h4 style="margin-top:12px">Approved admins</h4>${(S.admins||[]).map(r=>`<div class="item"><div class="t"><div><b>${esc(r.name)}</b> @${esc(r.username)}</div><div class="mut">ID ${r.uid}</div></div><button class="btn sm red" onclick="adm('remove',${r.uid})">Remove</button></div>`).join('')||'<div class="mut">No admins yet</div>'}</div>`:''}</div>`}
+};
+function setT(n,v){C().s.timers[n]=Math.max(1,+v||1);mark('timers')}
+function delT(n){delete C().s.timers[n];mark('timers');render()}
+function addT(){const n=$('#nu').value.trim().toLowerCase().replace(/^@/,'');if(!n)return;C().s.timers[n]=Math.max(1,+$('#ns').value||15);mark('timers');render()}
+const VK=k=>(S.voice_lib||[]).find(v=>v.k==k);
+function vSheet(k){const v=VK(k)||{};$('#sh').innerHTML=`<div class="panel"><h4>${k?'Edit voice':'Add voice'}</h4><div class="g"><input type="text" id="vn" placeholder="Name" maxlength="30" value="${esc(v.name||'')}"><input type="text" id="vi" placeholder="Voice ID" value="${esc(v.id||'')}"><div class="g g2"><select id="vp"><option ${v.prov=='cartesia'?'selected':''}>cartesia</option><option ${v.prov=='elevenlabs'?'selected':''}>elevenlabs</option></select><select id="vl"><option value="bn" ${v.lang=='bn'?'selected':''}>Bangla</option><option value="en" ${v.lang=='en'?'selected':''}>English</option></select></div></div><br><div class="g g2"><button class="btn" onclick="vClose()">Cancel</button><button class="btn pri" onclick="vSave('${k||''}')">Save</button></div></div>`;$('#sh').hidden=false}
+function vClose(){$('#sh').hidden=true}
+async function vSave(k){const voice={name:$('#vn').value.trim(),id:$('#vi').value.trim(),prov:$('#vp').value,lang:$('#vl').value};
+  if(!voice.name||!/^[\w-]{6,80}$/.test(voice.id))return toast('Enter a name and a valid voice ID',1);
+  try{const r=await api('/api/voice',{action:k?'edit':'add',k,voice});S.voice_lib=r.voice_lib;vClose();
+    if(k)await load();else{const n=r.voice_lib.find(x=>x.name.toLowerCase()==voice.name.toLowerCase());if(n){const f=n.prov+'_voice_'+n.lang;C().s[f]=n.id;mark(f)}render()}
+    toast('Voice saved ✓')}catch(e){toast((e.message||'Failed').slice(0,70),1)}}
+function useV(k){const v=VK(k);if(!v)return;const f=v.prov+'_voice_'+v.lang;C().s[f]=v.id;mark(f);render();autoPrev()}
+function delV(k){ask('Delete this voice?',async()=>{try{const r=await api('/api/voice',{action:'delete',k});S.voice_lib=r.voice_lib;await load();toast('Deleted ✓')}catch(e){toast('Delete failed',1)}})}
+function resetChat(){ask('Reset this group to global defaults?',async()=>{try{await api('/api/save',{chat_id:cur,reset:true});D[cur]={};await load();toast('Reset ✓')}catch(e){toast('Failed',1)}})}
+async function act(a){try{await api('/api/action',{chat_id:cur,action:a});toast('Done ✓');setTimeout(()=>load(),700)}catch(e){toast('Error',1)}}
+async function play(url,body){const r=await api(url,body,1);const b=await r.blob();const a=new Audio(URL.createObjectURL(b));a.play();return r}
+async function prev(){toast('Generating…');try{const r=await play('/api/preview',{s:C().s,text:$('#pt').value});toast('Played · '+(r.headers.get('X-TTS-Provider')||''))}catch(e){toast((e.message||'Preview failed').slice(0,90),1)}}
+let pt;function autoPrev(){if(live&&tab=='voice'){clearTimeout(pt);pt=setTimeout(prev,800)}}
+async function loadHist(){try{const r=await api(`/api/history?chat_id=${cur}${hfav?'&fav=1':''}`);hist=r.items;
+  $('#hl').innerHTML=hist.map(h=>`<div class="item"><div class="t"><div>${esc(h.text)}</div><div class="mut">${new Date(h.ts*1000).toLocaleString([],{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})} · ${esc(h.prov)} · ${esc(h.preset)}${h.target?' · @'+esc(h.target):''}</div></div>
+  <button class="btn sm" onclick="hPlay(${h.id})">▶</button><button class="btn sm ${h.fav?'on':''}" onclick="hFav(${h.id},${!h.fav})">★</button><button class="btn sm" onclick="hSend(${h.id})">↗</button><button class="btn sm red" onclick="hDel(${h.id})">✕</button></div>`).join('')||'<div class="mut">Nothing here yet</div>'}catch(e){$('#hl').innerHTML='<div class="mut">Could not load history</div>'}}
+async function hPlay(id){try{const r=await api('/api/histaudio?id='+id,undefined,1);new Audio(URL.createObjectURL(await r.blob())).play()}catch(e){toast('Play failed',1)}}
+async function hFav(id,f){await api('/api/hist',{action:'fav',id,fav:f});loadHist()}
+async function hSend(id){try{await api('/api/hist',{action:'send',id,chat_id:cur});toast('Sent ✓')}catch(e){toast('Send failed',1)}}
+async function hDel(id){await api('/api/hist',{action:'del',id});loadHist()}
+async function setCreds(){try{await api('/api/creds',{username:$('#au').value,password:$('#ap').value});toast('Login saved ✓');$('#ap').value='';load()}catch(e){toast(e.message.slice(0,60),1)}}
+async function adm(a,uid){try{await api('/api/admin',{action:a,uid});toast('Done ✓');load()}catch(e){toast('Error',1)}}
+load();
+</script></body></html>
