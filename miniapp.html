@@ -42,6 +42,27 @@ input[type=range]{width:100%;accent-color:var(--ac);margin:8px 0 0}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:2px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:rgba(20,20,22,.78);border-top:.5px solid var(--line);z-index:6;-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
 nav button{flex:1;max-width:120px;border:0;background:none;color:var(--mut);padding:4px 0;font-family:inherit;font-weight:500;font-size:11px;border-radius:10px;transition:color .2s}nav button span{display:block;height:26px;line-height:1}nav button svg{display:block;margin:0 auto 2px}
 nav button.on{color:var(--ac)}
+/* ---- design system v3: 4px grid, tokens, motion ---- */
+:root{--ease:cubic-bezier(.2,.8,.2,1);--hair:rgba(255,255,255,.1);--glow:0 0 0 3px rgba(10,132,255,.28)}
+.card,.panel{border:.5px solid var(--hair);transition:transform .25s var(--ease),background .25s var(--ease),border-color .25s var(--ease)}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--card)}
+.card:hover{border-color:rgba(255,255,255,.16)}
+.btn{transition:background .22s var(--ease),color .22s var(--ease),box-shadow .22s var(--ease),transform .15s var(--ease),opacity .15s;min-height:44px}
+.btn.sm{min-height:36px}.btn:active{transform:scale(.97);opacity:.8}
+.btn.use{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);color:var(--tx);min-width:76px}
+.btn.use.on{background:var(--ac);box-shadow:0 4px 14px rgba(10,132,255,.35);color:#fff}
+.btn.ghost{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.btn.sm.on:not(.use){box-shadow:0 4px 14px rgba(10,132,255,.3)}
+input[type=text],input[type=password],input[type=number],textarea,select{transition:box-shadow .2s var(--ease),border-color .2s var(--ease)}
+input:focus,textarea:focus,select:focus{outline:0;box-shadow:var(--glow)}
+.sw i,.sw i:after{transition:background .25s var(--ease),transform .25s var(--ease)}
+.pb b,.bars b{transition:width .5s var(--ease),height .5s var(--ease)}
+.item{transition:background .2s}
+.res{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--fill);font-size:13px;line-height:1.45;word-break:break-word;min-height:20px}
+.res.bad{color:var(--red)}.res.ok{color:var(--ok)}
+.hint{font-size:12px;color:var(--mut);margin-top:4px}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* floating liquid-glass nav */
 nav{left:50%;right:auto;transform:translateX(-50%);width:calc(100% - 28px);max-width:430px;bottom:calc(12px + env(safe-area-inset-bottom));padding:7px;gap:4px;border-radius:32px;border:.5px solid rgba(255,255,255,.2);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.03) 45%,rgba(255,255,255,.07)),rgba(24,24,28,.5);box-shadow:0 14px 36px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(255,255,255,.05);-webkit-backdrop-filter:blur(26px) saturate(190%);backdrop-filter:blur(26px) saturate(190%);overflow:hidden}
 nav:before{content:"";position:absolute;left:12%;right:12%;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);pointer-events:none}
@@ -65,9 +86,54 @@ details summary{cursor:pointer;color:var(--mut);font-size:13px;padding:4px 0}
 .login .hint{margin-top:14px;font-size:12px}.note{margin:12px 0 0;padding:9px 12px;border-radius:10px;background:rgba(255,159,10,.14);color:#ffb340;font-size:13px}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){header,nav{background:#141416}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+/* ---- v4: themes, sliders, savebar, glass nav motion, login, activity ---- */
+:root{--acrgb:10,132,255}
+html[data-th=light]{--bg:#f2f2f7;--card:#fff;--card2:#fff;--fill:rgba(120,120,128,.14);--tx:#000;--mut:#6c6c70;--line:rgba(0,0,0,.1);--hair:rgba(0,0,0,.08);color-scheme:light}
+html[data-th=light] header{background:rgba(242,242,247,.8)}html[data-th=light] body{background:var(--bg)}
+html[data-th=light] nav,html[data-th=light] .savebar{background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.35)),rgba(235,235,245,.5);border-color:rgba(0,0,0,.08)}
+html[data-th=light] .btn.use,html[data-th=light] .btn.ghost{box-shadow:inset 0 0 0 1px rgba(0,0,0,.16)}
+html[data-th=light] #toast{background:rgba(40,40,44,.95)}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,system-ui,sans-serif;letter-spacing:-.011em}
+h4,.big,.btn{letter-spacing:-.005em}
+body:before{background:radial-gradient(70vmax 50vmax at 0 0,rgba(var(--acrgb),.17),transparent 70%),radial-gradient(70vmax 50vmax at 100% 100%,rgba(94,92,230,.17),transparent 70%)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:32px;background:transparent;margin:4px 0 0;touch-action:pan-y}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--ac) var(--p,50%),var(--fill) var(--p,50%))}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--fill)}input[type=range]::-moz-range-progress{height:6px;border-radius:3px;background:var(--ac)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-11px;border-radius:50%;background:#fff;border:0;box-shadow:0 3px 10px rgba(0,0,0,.35),0 0 0 .5px rgba(0,0,0,.1);transition:transform .2s var(--ease)}
+input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#fff;border:0;box-shadow:0 3px 10px rgba(0,0,0,.35)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.12)}
+.savebar{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:7;display:flex;align-items:center;gap:12px;padding:6px 6px 6px 16px;border-radius:26px;font-size:14px;font-weight:600;border:.5px solid rgba(255,255,255,.2);background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04)),rgba(28,28,32,.6);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);box-shadow:0 10px 28px rgba(0,0,0,.4);animation:sbin .35s var(--ease)}
+.savebar[hidden]{display:none}@keyframes sbin{from{opacity:0;transform:translate(-50%,14px) scale(.96)}}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:3px;border-radius:12px;background:var(--fill)}
+.seg button{border:0;background:transparent;color:var(--tx);font:inherit;font-weight:600;font-size:14px;padding:9px 0;border-radius:9px;min-height:36px;transition:background .25s var(--ease),color .25s,box-shadow .25s}
+.seg button.on{background:var(--ac);color:#fff;box-shadow:0 3px 10px rgba(var(--acrgb),.35)}
+.sws{display:flex;gap:12px;flex-wrap:wrap;padding:6px 0}.sws button{width:34px;height:34px;border-radius:50%;border:0;box-shadow:inset 0 0 0 2px rgba(255,255,255,.25);transition:transform .25s var(--ease),box-shadow .25s}
+.sws button.on{transform:scale(1.15);box-shadow:0 0 0 3px var(--card),0 0 0 5px currentColor}
+nav .pill{position:absolute;left:0;top:0;border-radius:25px;pointer-events:none;z-index:0;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.07));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 0 0 .5px rgba(255,255,255,.16),0 4px 14px rgba(0,0,0,.25);will-change:transform;transition:scale .38s cubic-bezier(.34,1.56,.64,1)}
+nav.press .pill{scale:1.1}
+nav button{z-index:1;background:none!important;box-shadow:none!important}
+nav button svg{transition:transform .45s cubic-bezier(.34,1.56,.64,1)}nav button.on svg{transform:scale(1.14)}
+nav button em{display:block;font-style:normal;transition:transform .45s cubic-bezier(.34,1.56,.64,1),color .25s}nav button.on em{transform:scale(1.06)}
+html.lite *{animation:none!important;transition:none!important}html.lite nav,html.lite .savebar,html.lite header{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:#161618!important}
+html.lite[data-th=light] nav,html.lite[data-th=light] .savebar,html.lite[data-th=light] header{background:#f2f2f7!important}
+.lwrap{position:relative;margin-top:8vh}.orb{position:absolute;border-radius:50%;filter:blur(46px);opacity:.75;pointer-events:none;animation:flt 9s ease-in-out infinite alternate}
+.o1{width:190px;height:190px;left:-40px;top:-50px;background:rgb(var(--acrgb))}.o2{width:220px;height:220px;right:-50px;bottom:-60px;background:#5e5ce6;animation-delay:-4s}
+@keyframes flt{to{transform:translate(18px,-14px) scale(1.12)}}
+.login{position:relative;margin-top:0;border-radius:30px;padding:30px 22px 24px;border:.5px solid rgba(255,255,255,.22);background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.04)),rgba(30,30,36,.45);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);box-shadow:0 24px 60px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.3)}
+.login .lock{width:64px;height:64px;margin:0 auto 14px;border-radius:20px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,rgb(var(--acrgb)),#5e5ce6);box-shadow:0 10px 26px rgba(var(--acrgb),.45),inset 0 1px 0 rgba(255,255,255,.4)}
+.login input{background:rgba(255,255,255,.08);border:.5px solid rgba(255,255,255,.14)}
+.login .btn{background:linear-gradient(135deg,rgb(var(--acrgb)),#5e5ce6);color:#fff;box-shadow:0 10px 24px rgba(var(--acrgb),.4)}
+html[data-th=light] .login{background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.5))}html[data-th=light] .login input{background:rgba(0,0,0,.05)}
+.act{display:flex;justify-content:space-between;align-items:flex-start}.live{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ok);font-weight:600}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pls 1.8s ease-out infinite}@keyframes pls{0%{box-shadow:0 0 0 0 rgba(48,209,88,.6)}100%{box-shadow:0 0 0 8px rgba(48,209,88,0)}}
+.gs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.gs b{display:block;font-size:18px;font-variant-numeric:tabular-nums}.gs span{font-size:11px;color:var(--mut)}
+.gr{width:100%;height:auto;display:block;overflow:visible}.gr .ln{fill:none;stroke:var(--ac);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:dr 1.2s var(--ease) .1s forwards}
+.gr .ar{fill:url(#ag);opacity:0;animation:fi .9s ease .5s forwards}.gr .dt{fill:var(--ac);opacity:0;animation:fi .4s ease 1s forwards}.gr .hl{fill:var(--ac);opacity:0;animation:hp 2s ease-out 1.2s infinite}.gr text{fill:var(--mut);font-size:10px}
+.gr.static .ln{animation:none;stroke-dashoffset:0}.gr.static .ar,.gr.static .dt{animation:none;opacity:1}
+@keyframes dr{to{stroke-dashoffset:0}}@keyframes fi{to{opacity:1}}@keyframes hp{0%{opacity:.5;r:4}100%{opacity:0;r:14}}
 </style></head>
 <body>
-<header id="hd" hidden><select id="chat"></select><button class="btn pri" id="sv" onclick="saveNow()">💾 Save</button></header>
+<header id="hd" hidden><select id="chat"></select></header><div class="savebar" id="sb" hidden><span id="sv">Unsaved changes</span><button class="btn pri sm" onclick="saveNow()">Save</button></div>
 <main id="m"><div class="center mut">Loading…</div></main>
 <nav id="nv" hidden></nav><div id="toast"></div><div id="sh" class="sheet" hidden onclick="if(event.target==this)vClose()"></div>
 <script>
@@ -93,30 +159,32 @@ async function load(keep){
   $('#chat').innerHTML=(S.chats||[]).map(c=>`<option value="${c.id}" ${c.id==cur?'selected':''}>${esc(c.title||c.id)}</option>`).join('');
   render()}
 function loginView(pending){$('#hd').hidden=$('#nv').hidden=true;
-  $('#m').innerHTML=`<div class="card login"><div class="lock">🔐</div><div class="big">Secure Login</div><div class="mut">Admin Control Panel</div>
+  $('#m').innerHTML=`<div class="lwrap"><i class="orb o1"></i><i class="orb o2"></i><div class="card login"><div class="lock"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.5" r="1.2" fill="currentColor"/></svg></div><div class="big">Secure Login</div><div class="mut">Admin Control Panel</div>
   ${pending?'<div class="note">Your access is waiting for owner approval.</div>':''}
   <label class="l">Username</label><input type="text" id="lu" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Username">
   <label class="l">Password</label><input type="password" id="lp" autocomplete="current-password" placeholder="Password" onkeydown="if(event.key=='Enter')doLogin()">
   <button class="btn pri" id="lb" onclick="doLogin()">Unlock Panel</button>
-  <div class="mut hint">Only approved admins can sign in. Ask the owner if you need access.</div></div>`}
+  <div class="mut hint">Only approved admins can sign in. Ask the owner if you need access.</div></div></div>`}
 async function doLogin(){const b=$('#lb');b.disabled=true;
   try{const r=await api('/api/login',{username:$('#lu').value,password:$('#lp').value});ls('vb_t',r.token);load()}
   catch(e){b.disabled=false;toast((e.message||'Login failed').slice(0,80),1)}}
 
 function render(){
-  $('#nv').innerHTML=TABS.map(([k,i,n])=>`<button class="${k==tab?'on':''}" onclick="tab='${k}';render()"><span>${i}</span>${n}</button>`).join('');
+  navSync();
   const c=C();if(!c){$('#m').innerHTML='<div class="center"><div class="big">No groups yet</div><div class="mut">Add the bot to a group and send one message there. The group will then show up here. You must be an admin of that group.</div></div>'+(tab=='more'?V.more():'');return}
   $('#m').innerHTML=V[tab]();if(tab=='hist')loadHist()}
 $('#chat').onchange=async e=>{await saveNow();cur=e.target.value;render()};
 
 function set(k,v,re){C().s[k]=v;mark(k);if(re)render()}
-function mark(k){(D[cur]=D[cur]||{})[k]=1;$('#sv').textContent='● Unsaved';clearTimeout(tm);tm=setTimeout(saveNow,700)}
+function mark(k){(D[cur]=D[cur]||{})[k]=1;sbar(1);clearTimeout(tm);tm=setTimeout(saveNow,700)}
 async function saveNow(){clearTimeout(tm);const id=cur,c=C(),ks=Object.keys(D[id]||{});if(!c||!ks.length)return;D[id]={};
-  try{await api('/api/save',{chat_id:id,patch:Object.fromEntries(ks.map(k=>[k,c.s[k]]))});$('#sv').textContent='💾 Save';toast()}catch(e){ks.forEach(k=>D[id][k]=1);$('#sv').textContent='● Unsaved';toast('Save failed',1)}}
+  try{await api('/api/save',{chat_id:id,patch:Object.fromEntries(ks.map(k=>[k,c.s[k]]))});sbar(0);toast()}catch(e){ks.forEach(k=>D[id][k]=1);sbar(1);toast('Save failed',1)}}
 const ask=(m,f)=>tg.initData&&tg.showConfirm?tg.showConfirm(m,ok=>ok&&f()):confirm(m)&&f();
 const tog=(k,l)=>`<div class="row"><span>${l}</span><label class="sw"><input type="checkbox" ${C().s[k]?'checked':''} onchange="set('${k}',this.checked)"><i></i></label></div>`;
-const sld=(k,l,a,b,u='')=>`<div style="padding:6px 0"><div class="row" style="padding:0"><span>${l}</span><b id="v_${k}" style="color:var(--ac)">${C().s[k]}${u}</b></div><input type="range" min="${a}" max="${b}" value="${C().s[k]}" oninput="$('#v_${k}').textContent=this.value+'${u}'" onchange="set('${k}',+this.value);autoPrev()"></div>`;
+const sld=(k,l,a,b,u='')=>`<div style="padding:6px 0"><div class="row" style="padding:0"><span>${l}</span><b id="v_${k}" style="color:var(--ac)">${C().s[k]}${u}</b></div><input type="range" style="--p:${(C().s[k]-a)/(b-a)*100}%" min="${a}" max="${b}" value="${C().s[k]}" oninput="sp(this);$('#v_${k}').textContent=this.value+'${u}'" onchange="set('${k}',+this.value);autoPrev()"></div>`;
 const sel=(k,l,o)=>`<div class="row"><span>${l}</span><select style="width:58%" onchange="set('${k}',this.value,${k=='provider'||k=='lang'});autoPrev()">${o.map(([v,t])=>`<option value="${esc(v)}" ${C().s[k]==v?'selected':''}>${esc(t)}</option>`).join('')}</select></div>`;
+const inUse=v=>{const s=C().s,pv=s.provider=='both'?(s['cartesia_voice_'+v.lang]?'cartesia':'elevenlabs'):s.provider;
+  return pv==v.prov&&s[v.prov+'_voice_'+v.lang]==v.id&&(s.lang=='auto'||s.lang==v.lang)};
 const vname=v=>v.split('-').slice(2).join(' ').replace('Neural','')+' ('+v.slice(0,5)+')';
 
 const SHORT={quota:'Out of credits',plan:'Plan blocks voice',auth:'Key rejected',rate:'Rate limited',voice:'Voice ID problem',server:'Unreachable',other:'Error',config:'Not set'};
@@ -132,10 +200,10 @@ home(){const c=C(),st=c.stats,mx=Math.max(1,...st.daily.map(d=>d[1])),tp=Object.
  <div class="card"><div class="big">${st.voices}</div><div class="mut">Voices</div></div>
  <div class="card"><div class="big">${st.chars>9999?(st.chars/1000).toFixed(1)+'k':st.chars}</div><div class="mut">Characters</div></div>
  <div class="card s2"><div class="row" style="padding:0"><div><b>Bot status</b><div class="mut">${c.pending} queued</div></div><label class="sw"><input type="checkbox" ${c.s.enabled?'checked':''} onchange="set('enabled',this.checked)"><i></i></label></div></div>
- <div class="card s2"><h4>Last 7 days</h4><div class="bars">${st.daily.length?st.daily.map(d=>`<div><b style="height:${Math.max(4,d[1]/mx*100)}%"></b><span>${d[0].slice(8)}</span></div>`).join(''):'<span class="mut">No data yet</span>'}</div></div>
+ ${graph(st)}
  <div class="card s2"><h4>Providers used</h4>${Object.entries(st.prov).map(([k,n])=>`<div class="mut" style="display:flex;justify-content:space-between"><span>${esc(k)}</span><span>${n}</span></div><div class="pb"><b style="width:${n/tp*100}%"></b></div>`).join('')||'<span class="mut">No data yet</span>'}</div>
  <div class="card s4"><h4>Voice services</h4><div class="chips">${keyTag('cartesia')}${keyTag('elevenlabs')}<span class="tag ok">Edge TTS · Ready</span><span class="tag ${S.backup?'ok':''}">Backup ${S.backup?'On':'Off'}</span></div></div>
- <button class="btn pri" onclick="act('send')">▶ Send now</button><button class="btn" onclick="act('clear')">🗑 Clear queue</button></div>
+ <button class="btn pri" ${cur=='__global__'?'disabled':''} onclick="act('send')">Send now</button><button class="btn" ${cur=='__global__'?'disabled':''} onclick="act('clear')">Clear queue</button>${cur=='__global__'?'<div class="hint s4">Queue actions need a group. Pick one from the menu above.</div>':''}</div>
  <button class="btn s4" style="width:100%" onclick="load()">↻ Refresh</button>`},
 targets(){const c=C();return `<div class="bento"><div class="card s4"><h4>Who gets voice replies</h4>
  ${tog('only_listed','Only reply to listed users')}${sld('default_timer','Wait before sending',1,120,'s')}</div>
@@ -151,16 +219,25 @@ voice(){const c=C(),s=c.s,P={normal:'Normal',deep:'Deep',robot:'Robot',child:'Ch
  <div class="row"><span>Live preview on change</span><label class="sw"><input type="checkbox" ${live?'checked':''} onchange="live=this.checked"><i></i></label></div>
  <input type="text" id="pt" value="Hello! This is a test voice."><br><br><button class="btn pri" style="width:100%" onclick="prev()">🔊 Preview</button></div>
  <div class="card s4"><div class="row" style="padding:0"><h4 style="margin:0">Voice library</h4><button class="btn sm pri" onclick="vSheet()">＋ Add voice</button></div><div class="mut" style="margin:4px 0 6px">Shared by all groups. “Use” applies to: <b>${esc(c.title||'Global')}</b></div>
- ${(S.voice_lib||[]).map(v=>{const on=s[v.prov+'_voice_'+v.lang]==v.id;return `<div class="item"><div class="t"><div><b>${esc(v.name)}</b> ${on?'<span class="tag ok">active</span>':''}</div><div class="mut">${v.prov} · ${v.lang} · ${esc(v.id.slice(0,12))}…</div></div><button class="btn sm ${on?'on':''}" onclick="useV('${v.k}')">Use</button><button class="btn sm" onclick="vSheet('${v.k}')">✎</button><button class="btn sm red" onclick="delV('${v.k}')">✕</button></div>`}).join('')||'<div class="mut">Library is empty</div>'}
+ ${s.provider=='edge'?'<div class="hint" style="margin:0 0 6px">Edge TTS is selected, so no library voice is in use.</div>':''}${(S.voice_lib||[]).map(v=>{const on=inUse(v);return `<div class="item"><div class="t"><div><b>${esc(v.name)}</b> ${on?'<span class="tag ok">in use</span>':''}</div><div class="mut">${v.prov} · ${v.lang} · ${esc(v.id.slice(0,12))}…</div></div><button class="btn sm use ${on?'on':''}" onclick="useV('${v.k}')">${on?'In use':'Use'}</button><button class="btn sm" onclick="vSheet('${v.k}')">✎</button><button class="btn sm red" onclick="delV('${v.k}')">✕</button></div>`}).join('')||'<div class="mut">Library is empty</div>'}
  <details><summary>Direct voice ID fields</summary>${ids.map(([p,l,n])=>`<label class="l">${n}</label><input type="text" value="${esc(s[p+'_voice_'+l]||'')}" placeholder="voice ID" onchange="set('${p}_voice_${l}',this.value.trim())">`).join('')}</details></div>
+ <div class="card s4"><h4>ElevenLabs quality</h4>${sld('el_stability','Stability',0,100,'%')}${sld('el_similarity','Similarity boost',0,100,'%')}<div class="hint">Higher stability sounds steadier; lower sounds more expressive.</div></div>
+ <div class="card s4"><h4>Fallback</h4>${tog('fallback_edge','In Auto mode, fall back to Edge TTS when APIs fail')}<div class="hint">Off means Auto mode reports the error instead of switching to Edge.</div></div>
+ <div class="card s4"><h4>Test providers</h4><div class="g g2" style="grid-template-columns:repeat(3,1fr)"><button class="btn sm ghost" onclick="ptest('cartesia')">Cartesia</button><button class="btn sm ghost" onclick="ptest('elevenlabs')">ElevenLabs</button><button class="btn sm ghost" onclick="ptest('edge')">Edge TTS</button></div><div id="pr" class="res">Tap a provider to send a short test with the current settings.</div></div>
  <div class="card s4"><h4>Edge voices</h4>${sel('voice_bn','Bangla',S.voices.bn.map(v=>[v,vname(v)]))}${sel('voice_en','English',S.voices.en.map(v=>[v,vname(v)]))}</div></div>`},
 hist(){return `<div class="bento"><div class="card s4"><div class="chips"><button class="btn sm ${hfav?'':'on'}" onclick="hfav=false;render()">All</button><button class="btn sm ${hfav?'on':''}" onclick="hfav=true;render()">⭐ Favorites</button></div><div id="hl" style="margin-top:6px"><div class="mut">Loading…</div></div></div></div>`},
-more(){const c=C(),own=S.role=='owner';return `<div class="bento">${c?`<div class="card s4"><h4>Filters</h4>${tog('read_names','Read sender name aloud')}${tog('strip_links','Replace links with the word link')}${tog('strip_emoji','Remove emojis')}${tog('caption','Add text caption to voice')}${tog('reply','Reply directly to the message')}${sld('min_chars','Minimum characters',1,100)}${sld('max_chars','Max characters per voice',200,20000)}</div>`:''}
+more(){const c=C(),own=S.role=='owner';return `<div class="bento">${c?`<div class="card s4"><h4>Filters</h4>${tog('read_names','Read sender name aloud')}${tog('strip_links','Replace links with the word link')}${tog('strip_emoji','Remove emojis')}${tog('caption','Add text caption to voice')}${tog('reply','Reply directly to the message')}${sld('min_chars','Minimum characters',1,100)}${sld('max_chars','Max characters per voice',40,5000)}</div>`:''}
  ${c&&cur!='__global__'?`<div class="card s4"><button class="btn red" style="width:100%" onclick="resetChat()">↺ Reset this group to global defaults</button></div>`:''}
- <div class="card s4"><h4>Browser login</h4><div class="mut">${S.login?'Current username: <b>'+esc(S.login)+'</b>':'Not set'}</div><div class="g g2"><input type="text" id="au" placeholder="username" value="${esc(S.login)}"><input type="password" id="ap" placeholder="password (min 8)"></div><br><div class="g g2"><button class="btn pri" onclick="setCreds()">Save login</button>${ls('vb_t')?'<button class="btn red" onclick="ls(\'vb_t\',null);load()">Logout</button>':'<span></span>'}</div></div>
+ ${own?`<div class="card s4"><h4>Telegram backup</h4><div class="row" style="padding:0"><span>Send settings backup to Telegram</span><label class="sw"><input type="checkbox" ${S.backup?'checked':''} ${S.backup_avail?'':'disabled'} onchange="setBackup(this.checked)"><i></i></label></div><div class="hint">${S.backup_avail?'Off stops new backup files. Your data is then kept only on the host disk, which some hosts wipe on redeploy.':'Unavailable: BACKUP_CHAT_ID is set to off, or no owner ID is configured.'}</div></div>`:''}
+ <div class="card s4"><h4>Appearance</h4><div class="seg">${[['dark','Dark'],['light','Light'],['system','System Auto']].map(([v,t])=>`<button class="${PREF.th==v?'on':''}" onclick="setPref('th','${v}')">${t}</button>`).join('')}</div>
+ <label class="l">Accent color</label><div class="sws">${ACC.map(([n,c])=>`<button style="background:rgb(${c});color:rgb(${c})" class="${PREF.ac==c?'on':''}" aria-label="${n}" onclick="setPref('ac','${c}')"></button>`).join('')}</div>
+ <div class="row"><span>Reduce effects (saves battery)</span><label class="sw"><input type="checkbox" ${PREF.fx?'checked':''} onchange="setPref('fx',this.checked)"><i></i></label></div><div class="hint">Turns off blur and animations on slower phones. Saved on this device only.</div></div>
+ <div class="card s4"><h4>Browser login</h4><div class="row" style="padding:0"><span>Enable browser login</span><label class="sw"><input type="checkbox" ${S.login?'checked':''} onchange="loginToggle(this)"><i></i></label></div>
+ <div class="hint">${S.login?'Signed up as <b>'+esc(S.login)+'</b>.':'Lets you open this panel in a normal browser.'}</div>${S.login?'<div class="g g2" style="margin-top:10px"><button class="btn sm ghost" onclick="credSheet()">Change</button>'+(ls('vb_t')?'<button class="btn sm red" onclick="ls(\'vb_t\',null);load()">Logout</button>':'<span></span>')+'</div>':''}</div>
  ${own?`<div class="card s4"><h4>Admin approvals</h4>${(S.requests||[]).map(r=>`<div class="item"><div class="t"><div><b>${esc(r.name)}</b> @${esc(r.username)}</div><div class="mut">ID ${r.uid}</div></div><button class="btn sm pri" onclick="adm('approve',${r.uid})">Approve</button><button class="btn sm red" onclick="adm('deny',${r.uid})">Deny</button></div>`).join('')||'<div class="mut">No pending requests</div>'}
  <h4 style="margin-top:12px">Approved admins</h4>${(S.admins||[]).map(r=>`<div class="item"><div class="t"><div><b>${esc(r.name)}</b> @${esc(r.username)}</div><div class="mut">ID ${r.uid}</div></div><button class="btn sm red" onclick="adm('remove',${r.uid})">Remove</button></div>`).join('')||'<div class="mut">No admins yet</div>'}</div>`:''}</div>`}
 };
+async function setBackup(on){try{await api('/api/backup',{enabled:on});await load();toast(on?'Backup on':'Backup off')}catch(e){toast('Failed',1);load()}}
 function setT(n,v){C().s.timers[n]=Math.max(1,+v||1);mark('timers')}
 function delT(n){delete C().s.timers[n];mark('timers');render()}
 function addT(){const n=$('#nu').value.trim().toLowerCase().replace(/^@/,'');if(!n)return;C().s.timers[n]=Math.max(1,+$('#ns').value||15);mark('timers');render()}
@@ -172,11 +249,16 @@ async function vSave(k){const voice={name:$('#vn').value.trim(),id:$('#vi').valu
   try{const r=await api('/api/voice',{action:k?'edit':'add',k,voice});S.voice_lib=r.voice_lib;vClose();
     if(k)await load();else{const n=r.voice_lib.find(x=>x.name.toLowerCase()==voice.name.toLowerCase());if(n){const f=n.prov+'_voice_'+n.lang;C().s[f]=n.id;mark(f)}render()}
     toast('Voice saved ✓')}catch(e){toast((e.message||'Failed').slice(0,70),1)}}
-function useV(k){const v=VK(k);if(!v)return;const f=v.prov+'_voice_'+v.lang;C().s[f]=v.id;mark(f);render();autoPrev()}
+function useV(k){const v=VK(k);if(!v)return;const s=C().s,f=v.prov+'_voice_'+v.lang;s[f]=v.id;mark(f);
+  if(s.provider!='both'&&s.provider!=v.prov){s.provider=v.prov;mark('provider')}
+  if(s.lang!='auto'&&s.lang!=v.lang){s.lang=v.lang;mark('lang')}render();autoPrev()}
 function delV(k){ask('Delete this voice?',async()=>{try{const r=await api('/api/voice',{action:'delete',k});S.voice_lib=r.voice_lib;await load();toast('Deleted ✓')}catch(e){toast('Delete failed',1)}})}
 function resetChat(){ask('Reset this group to global defaults?',async()=>{try{await api('/api/save',{chat_id:cur,reset:true});D[cur]={};await load();toast('Reset ✓')}catch(e){toast('Failed',1)}})}
-async function act(a){try{await api('/api/action',{chat_id:cur,action:a});toast('Done ✓');setTimeout(()=>load(),700)}catch(e){toast('Error',1)}}
+async function act(a){if(cur=='__global__')return toast('Select a group first',1);try{await api('/api/action',{chat_id:cur,action:a});toast('Done ✓');setTimeout(()=>load(),700)}catch(e){toast('Error',1)}}
 async function play(url,body){const r=await api(url,body,1);const b=await r.blob();const a=new Audio(URL.createObjectURL(b));a.play();return r}
+async function ptest(p){const e=$('#pr');e.className='res';e.textContent='Testing '+p+'…';
+  try{const r=await play('/api/preview',{s:{...C().s,provider:p},text:'Hello! This is a provider test.'});e.className='res ok';e.textContent='Working · '+(r.headers.get('X-TTS-Provider')||p)}
+  catch(x){e.className='res bad';e.textContent=(x.message||'Failed').slice(0,220)}}
 async function prev(){toast('Generating…');try{const r=await play('/api/preview',{s:C().s,text:$('#pt').value});toast('Played · '+(r.headers.get('X-TTS-Provider')||''))}catch(e){toast((e.message||'Preview failed').slice(0,90),1)}}
 let pt;function autoPrev(){if(live&&tab=='voice'){clearTimeout(pt);pt=setTimeout(prev,800)}}
 async function loadHist(){try{const r=await api(`/api/history?chat_id=${cur}${hfav?'&fav=1':''}`);hist=r.items;
@@ -186,7 +268,44 @@ async function hPlay(id){try{const r=await api('/api/histaudio?id='+id,undefined
 async function hFav(id,f){await api('/api/hist',{action:'fav',id,fav:f});loadHist()}
 async function hSend(id){try{await api('/api/hist',{action:'send',id,chat_id:cur});toast('Sent ✓')}catch(e){toast('Send failed',1)}}
 async function hDel(id){await api('/api/hist',{action:'del',id});loadHist()}
-async function setCreds(){try{await api('/api/creds',{username:$('#au').value,password:$('#ap').value});toast('Login saved ✓');$('#ap').value='';load()}catch(e){toast(e.message.slice(0,60),1)}}
+function credSheet(){$('#sh').innerHTML=`<div class="panel"><h4>Browser login</h4><div class="g"><label class="l" style="margin:0">Set User</label><input type="text" id="au" value="${esc(S.login)}" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Username (3-32)"><label class="l" style="margin:8px 0 0">Set Password</label><input type="password" id="ap" autocomplete="new-password" placeholder="At least 6 characters"></div><br><div class="g g2"><button class="btn" onclick="vClose();render()">Cancel</button><button class="btn pri" onclick="setCreds()">Save</button></div></div>`;$('#sh').hidden=false}
+function loginToggle(el){if(el.checked)credSheet();else ask('Turn off browser login? The username and password will be removed.',async()=>{try{await api('/api/creds',{remove:true});toast('Login removed');load()}catch(e){toast('Failed',1);load()}})}
+async function setCreds(){const u=$('#au').value.trim(),p=$('#ap').value;if(u.length<3)return toast('Enter a username (3+ characters)',1);if(p.length<6)return toast('Password needs at least 6 characters',1);
+  try{await api('/api/creds',{username:u,password:p});vClose();toast('Login saved ✓');load()}catch(e){toast((e.message||'Failed').slice(0,60),1)}}
 async function adm(a,uid){try{await api('/api/admin',{action:a,uid});toast('Done ✓');load()}catch(e){toast('Error',1)}}
 load();
+
+/* ---- v4 helpers ---- */
+const ACC=[['Blue','10,132,255'],['Purple','191,90,242'],['Pink','255,55,95'],['Orange','255,159,10'],['Green','48,209,88'],['Teal','100,210,255']];
+const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('vb_pref')||'{}')}catch(e){}return{th:p.th||'dark',ac:p.ac||'10,132,255',fx:!!p.fx}})();
+const mq=window.matchMedia?matchMedia('(prefers-color-scheme: light)'):null;
+function applyPref(){const h=document.documentElement,l=PREF.th=='light'||(PREF.th=='system'&&mq&&mq.matches);h.dataset.th=l?'light':'dark';
+  h.style.setProperty('--ac','rgb('+PREF.ac+')');h.style.setProperty('--acrgb',PREF.ac);h.classList.toggle('lite',PREF.fx);
+  const t=document.querySelector('meta[name=theme-color]');if(t)t.content=l?'#f2f2f7':'#000000';try{tg.setHeaderColor&&tg.setHeaderColor(l?'#f2f2f7':'#000000');tg.setBackgroundColor&&tg.setBackgroundColor(l?'#f2f2f7':'#000000')}catch(e){}}
+function setPref(k,v){PREF[k]=v;try{localStorage.setItem('vb_pref',JSON.stringify(PREF))}catch(e){}applyPref();render()}
+if(mq&&mq.addEventListener)mq.addEventListener('change',()=>PREF.th=='system'&&applyPref());applyPref();
+function sp(el){el.style.setProperty('--p',(el.value-el.min)/(el.max-el.min)*100+'%')}
+function sbar(on){$('#sb').hidden=!on}
+let px=null,LR=0;
+function navSync(){const n=$('#nv');if(!n.dataset.b){n.innerHTML='<i class="pill"></i>'+TABS.map(([k,i,l])=>`<button data-k="${k}" onclick="goTab('${k}')"><span>${i}</span><em>${l}</em></button>`).join('');n.dataset.b=1;
+  n.addEventListener('pointerdown',e=>{if(e.target.closest('button'))n.classList.add('press')});['pointerup','pointercancel','pointerleave'].forEach(t=>n.addEventListener(t,()=>n.classList.remove('press')))}
+  n.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k==tab));movePill()}
+function goTab(k){if(k==tab)return;tab=k;render()}
+function movePill(){const n=$('#nv'),p=n.querySelector('.pill'),b=n.querySelector('button.on');if(!p||!b||n.hidden||!b.offsetWidth)return;
+  const x=b.offsetLeft,w=b.offsetWidth;p.style.width=w+'px';p.style.height=b.offsetHeight+'px';p.style.top=b.offsetTop+'px';p.style.transform=`translateX(${x}px)`;
+  if(px!==null&&px!==x&&!PREF.fx&&p.animate){const d=Math.abs(x-px),st=1+Math.min(.55,d/n.offsetWidth*1.5);
+    p.animate([{transform:`translateX(${px}px) scale(1,1)`},{transform:`translateX(${(px+x)/2}px) scale(${st},${1-(st-1)*.3})`,offset:.42},{transform:`translateX(${x}px) scale(.96,1.04)`,offset:.72},{transform:`translateX(${x}px) scale(1,1)`}],{duration:560,easing:'cubic-bezier(.3,1.25,.5,1)'})}
+  px=x}
+addEventListener('resize',()=>{px=null;movePill()});
+function graph(st){const d=st.daily||[],W=320,H=110,L=8,R=8,T=14,B=22;if(!d.length)return `<div class="card s4"><div class="act"><h4>Bot activity</h4><span class="live"><i></i>Live</span></div><div class="mut" style="padding:26px 0;text-align:center">No activity yet. Voices will appear here.</div></div>`;
+  const v=d.map(x=>x[1]),mx=Math.max(1,...v),n=d.length,X=i=>L+(n==1?(W-L-R)/2:i*(W-L-R)/(n-1)),Y=y=>T+(H-T-B)*(1-y/mx);
+  let p=`M${X(0)},${Y(v[0])}`;for(let i=1;i<n;i++){const cx=(X(i-1)+X(i))/2;p+=` C${cx},${Y(v[i-1])} ${cx},${Y(v[i])} ${X(i)},${Y(v[i])}`}
+  const a=p+` L${X(n-1)},${H-B} L${X(0)},${H-B} Z`,tot=v.reduce((a,b)=>a+b,0),pk=Math.max(...v),td=new Date().toISOString().slice(0,10),today=d.filter(x=>x[0]==td).reduce((a,b)=>a+b[1],0);
+  return `<div class="card s4"><div class="act"><h4>Bot activity</h4><span class="live"><i></i>Live</span></div>
+  <svg class="gr ${LR?'static':''}" viewBox="0 0 ${W} ${H}"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--ac)" stop-opacity=".42"/><stop offset="1" stop-color="var(--ac)" stop-opacity="0"/></linearGradient></defs>
+  ${[0,.5,1].map(f=>`<line x1="${L}" x2="${W-R}" y1="${T+(H-T-B)*f}" y2="${T+(H-T-B)*f}" stroke="var(--line)" stroke-width=".6"/>`).join('')}
+  <path class="ar" d="${a}"/><path class="ln" pathLength="1" d="${p}"/>${v.map((y,i)=>`<circle class="dt" cx="${X(i)}" cy="${Y(y)}" r="2.6"/>`).join('')}<circle class="hl" cx="${X(n-1)}" cy="${Y(v[n-1])}" r="4"/>
+  ${d.map((x,i)=>`<text x="${X(i)}" y="${H-6}" text-anchor="middle">${x[0].slice(8)}</text>`).join('')}</svg>
+  <div class="gs"><div><b>${today}</b><span>Today</span></div><div><b>${tot}</b><span>${n}-day total</span></div><div><b>${pk}</b><span>Peak day</span></div><div><b>${(tot/n).toFixed(1)}</b><span>Daily avg</span></div></div></div>`}
+setInterval(()=>{if(tab=='home'&&!document.hidden&&S.role&&!Object.keys(D[cur]||{}).length){LR=1;load().finally(()=>LR=0)}},20000);
 </script></body></html>

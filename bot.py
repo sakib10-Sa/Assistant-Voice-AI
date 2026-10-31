@@ -58,12 +58,13 @@ DEFAULTS = {
     "rate": 0, "pitch": 0, "volume": 0, "preset": "normal", "preset_edge": True,
     "provider": TTS_PROVIDER, "cartesia_voice_bn": "", "cartesia_voice_en": "",
     "elevenlabs_voice_bn": "", "elevenlabs_voice_en": "",
+    "fallback_edge": True, "el_stability": 50, "el_similarity": 75,
     "strip_links": True, "strip_emoji": True, "min_chars": 1, "max_chars": 3000, "caption": False, "reply": True,
 }
 ENUMS = {"provider": set(PROVIDERS), "lang": {"auto", "bn", "en"}, "preset": set(PRESETS),
          "voice_bn": set(VOICES["bn"]), "voice_en": set(VOICES["en"])}
 CLAMP = {"default_timer": (1, 600), "rate": (-50, 100), "pitch": (-50, 50), "volume": (-50, 50),
-         "min_chars": (1, 500), "max_chars": (200, 20000)}
+         "el_stability": (0, 100), "el_similarity": (0, 100), "min_chars": (1, 500), "max_chars": (40, 5000)}
 ID_RE = re.compile(r"^[A-Za-z0-9_\-]{6,80}$")
 CHUNK = 800
 EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F]")
@@ -121,21 +122,26 @@ async def restore(bot):
     except Exception:
         log.exception("Backup restore failed")
 
+def backup_target():
+    """Backups go to BACKUP_CHAT unless the owner switched them off in the panel."""
+    return "" if db.get("backup_off") else BACKUP_CHAT
+
 async def do_backup(bot):
-    if not BACKUP_CHAT:
+    tgt = backup_target()
+    if not tgt:
         return
     doc = InputFile(json.dumps(db, ensure_ascii=False).encode(), filename="voicebot-backup.json")
     if backup["mid"]:
         try:
-            await bot.edit_message_media(chat_id=BACKUP_CHAT, message_id=backup["mid"], media=InputMediaDocument(doc))
+            await bot.edit_message_media(chat_id=tgt, message_id=backup["mid"], media=InputMediaDocument(doc))
             return
         except Exception as exc:
             if "not modified" in str(exc).lower():
                 return
             log.warning("Backup edit failed (%s); sending a new backup file", exc)
             backup["mid"] = None
-    m = await bot.send_document(BACKUP_CHAT, doc, caption="Auto backup (pinned) - do not delete", disable_notification=True)
-    await bot.pin_chat_message(BACKUP_CHAT, m.message_id, disable_notification=True)
+    m = await bot.send_document(tgt, doc, caption="Auto backup (pinned) - do not delete", disable_notification=True)
+    await bot.pin_chat_message(tgt, m.message_id, disable_notification=True)
     backup["mid"] = m.message_id
 
 async def backup_loop(bot):
@@ -418,7 +424,7 @@ async def elevenlabs_tts(text, s, lang):
         raise TTSError("elevenlabs", "config", f"no {lang} voice selected: Voice > Voice library > Use, then Save")
     speed = max(0.7, min(1.2, 1.0 + float(s.get("rate", 0)) / 250))
     payload = {"text": text, "model_id": os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2"),
-               "voice_settings": {"stability": 0.5, "similarity_boost": 0.75, "speed": speed}}
+               "voice_settings": {"stability": int(s.get("el_stability", 50)) / 100, "similarity_boost": int(s.get("el_similarity", 75)) / 100, "speed": speed}}
     headers = {"xi-api-key": ELEVENLABS_API_KEY, "Content-Type": "application/json", "Accept": "audio/mpeg"}
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}?output_format=mp3_44100_128"
     return await post_audio("elevenlabs", url, headers, payload)
@@ -446,6 +452,8 @@ async def tts_full(text, s, lang=None):
             errors.append(err)
             if provider != "both":
                 raise TTSFailure(str(err)) from exc
+    if provider == "both" and not s.get("fallback_edge", True):
+        raise TTSFailure("; ".join(str(e) for e in errors) or "No voice provider is configured")
     if provider not in ("edge", "both"):
         raise TTSFailure("; ".join(str(e) for e in errors) or "No voice provider is configured")
     if errors:
@@ -663,7 +671,7 @@ async def api_state(req):
                           "pending": sum(len(v) for k, v in buffers.items() if str(k[0]) == cid)})
     out.update(chats=chats, voice_lib=lib(), voices=VOICES, providers=list(PROVIDERS), presets=list(PRESETS),
                login=next((n for n, v in db.get("creds", {}).items() if v["uid"] == uid), ""),
-               backup=bool(BACKUP_CHAT))
+               backup=bool(backup_target()), backup_avail=bool(BACKUP_CHAT))
     if r == "owner":
         out["admins"] = [{"uid": k, **v} for k, v in db.get("admins", {}).items()]
         out["requests"] = [{"uid": k, **v} for k, v in db.get("requests", {}).items()]
@@ -780,14 +788,26 @@ async def api_login(req):
 
 async def api_creds(req):
     uid, b = await need(req), await req.json()
+    if b.get("remove"):
+        cr = db.setdefault("creds", {})
+        for n in [n for n, v in cr.items() if v["uid"] == uid]: cr.pop(n)
+        save()
+        return web.json_response({"ok": True})
     u, p = str(b.get("username", "")).strip().lower(), str(b.get("password", ""))
-    if not re.fullmatch(r"[a-z0-9_.\-]{3,32}", u) or len(p) < 8:
-        raise web.HTTPBadRequest(text="Username 3-32 chars (a-z 0-9 _ . -), password min 8 chars")
+    if not re.fullmatch(r"[a-z0-9_.\-]{3,32}", u) or len(p) < 6:
+        raise web.HTTPBadRequest(text="Username 3-32 chars (a-z 0-9 _ . -), password at least 6 characters")
     cr = db.setdefault("creds", {})
     if u in cr and cr[u]["uid"] != uid or u == PANEL_USER: raise web.HTTPConflict(text="Username taken")
     for n in [n for n, v in cr.items() if v["uid"] == uid]: cr.pop(n)
     salt, h = hash_pw(p); cr[u] = {"uid": uid, "salt": salt, "hash": h}; save()
     return web.json_response({"ok": True})
+
+async def api_backup(req):
+    await need(req, owner=True)
+    b = await req.json()
+    db["backup_off"] = not bool(b.get("enabled"))
+    save()
+    return web.json_response({"ok": True, "enabled": not db["backup_off"] and bool(BACKUP_CHAT)})
 
 async def api_history(req):
     uid, bot = await need(req), req.app["bot"]
@@ -1094,7 +1114,7 @@ async def post_init(app):
     w.add_routes([web.get("/", health), web.get("/health", health), web.get("/app", page), web.get("/api/state", api_state),
                   web.post("/api/save", api_save), web.post("/api/voice", api_voice), web.post("/api/action", api_action),
                   web.post("/api/preview", api_preview), web.post("/api/request", api_request),
-                  web.post("/api/login", api_login), web.post("/api/creds", api_creds),
+                  web.post("/api/login", api_login), web.post("/api/creds", api_creds), web.post("/api/backup", api_backup),
                   web.post("/api/admin", api_admin), web.get("/api/history", api_history),
                   web.post("/api/hist", api_hist), web.get("/api/histaudio", api_histaudio)])
     runner = web.AppRunner(w); await runner.setup()
