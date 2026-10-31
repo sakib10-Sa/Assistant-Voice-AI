@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: telegram-voice-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    healthCheckPath: /
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: OWNER_IDS
+        sync: false
+      - key: WEBAPP_URL
+        sync: false
+      - key: DB_FILE
+        value: data.json
+      - key: TTS_PROVIDER
+        value: both
+      - key: CARTESIA_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: BACKUP_CHAT_ID
+        sync: false
+      - key: PANEL_USER
+        sync: false
+      - key: PANEL_PASS
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
