@@ -36,6 +36,8 @@ TTS_PROVIDER = os.getenv("TTS_PROVIDER", "both").strip().lower()
 if TTS_PROVIDER not in PROVIDERS:
     TTS_PROVIDER = "both"
 BACKUP_CHAT = os.getenv("BACKUP_CHAT_ID", "").strip() or (str(min(OWNERS)) if OWNERS else "")
+if BACKUP_CHAT.lower() in ("off", "0", "none", "false", "no"):  # BACKUP_CHAT_ID=off disables Telegram backups
+    BACKUP_CHAT = ""
 KEEPALIVE_URL = (os.getenv("RENDER_EXTERNAL_URL", "") or os.getenv("WEBAPP_URL", "")).rstrip("/")
 PANEL_USER = os.getenv("PANEL_USER", "").strip().lower()
 PANEL_PASS = os.getenv("PANEL_PASS", "")
@@ -43,7 +45,7 @@ SESSION_SECRET = (os.getenv("SESSION_SECRET") or hashlib.sha256(("session:" + TO
 
 VOICES = {
     "bn": ["bn-BD-NabanitaNeural", "bn-BD-PradeepNeural", "bn-IN-TanishaaNeural", "bn-IN-BashkarNeural"],
-    "en": ["en-US-AriaNeural", "en-US-GuyNeural", "en-US-JennyNeural", "en-GB-SoniaNeural", "en-IN-NeerjaNeural"],
+    "en": ["en-US-AriaNeural", "en-US-GuyNeural", "en-US-JennyNeural", "en-US-MichelleNeural", "en-GB-SoniaNeural", "en-GB-LibbyNeural", "en-IN-NeerjaNeural"],
 }
 # preset -> (speed delta %, pitch delta Hz, edge voice gender). Added on top of the manual sliders.
 PRESETS = {"normal": (0, 0, None), "deep": (-8, -30, "m"), "robot": (-5, -12, "m"),
@@ -127,7 +129,10 @@ async def do_backup(bot):
         try:
             await bot.edit_message_media(chat_id=BACKUP_CHAT, message_id=backup["mid"], media=InputMediaDocument(doc))
             return
-        except Exception:
+        except Exception as exc:
+            if "not modified" in str(exc).lower():
+                return
+            log.warning("Backup edit failed (%s); sending a new backup file", exc)
             backup["mid"] = None
     m = await bot.send_document(BACKUP_CHAT, doc, caption="Auto backup (pinned) - do not delete", disable_notification=True)
     await bot.pin_chat_message(BACKUP_CHAT, m.message_id, disable_notification=True)
@@ -280,6 +285,7 @@ def voice_settings(s):
 PNAME = {"cartesia": "Cartesia", "elevenlabs": "ElevenLabs", "edge": "Edge TTS"}
 KIND_TEXT = {
     "quota": "credits / monthly quota used up",
+    "plan": "your plan cannot use this voice through the API (Voice Library voices need a paid plan)",
     "auth": "API key is invalid or not allowed",
     "rate": "too many requests (rate limit)",
     "voice": "voice ID not found or not valid for this language",
@@ -289,6 +295,7 @@ KIND_TEXT = {
 }
 KIND_FIX = {
     "quota": "Add credits or upgrade the plan, or switch provider in Panel > Voice > Provider.",
+    "plan": "Use an ElevenLabs Default voice (e.g. Sarah EXAVITQu4vr4xnSDxMaL), or add $5 credits / upgrade, or use Edge TTS.",
     "auth": "Check the API key in your hosting environment variables.",
     "rate": "This usually clears by itself. If it repeats, reduce simultaneous voices.",
     "voice": "Check the voice ID in Panel > Voice > Voice library.",
@@ -306,7 +313,8 @@ app_ref: dict = {}
 class TTSError(RuntimeError):
     def __init__(self, provider, kind, detail=""):
         self.provider, self.kind, self.detail = provider, kind, detail
-        super().__init__(f"{PNAME.get(provider, provider)}: {KIND_TEXT.get(kind, kind)}")
+        extra = f" ({detail})" if kind == "config" and detail else ""
+        super().__init__(f"{PNAME.get(provider, provider)}: {KIND_TEXT.get(kind, kind)}{extra}")
 
 
 class TTSFailure(RuntimeError):
@@ -315,6 +323,8 @@ class TTSFailure(RuntimeError):
 
 def classify(status, body):
     b = (body or "").lower()
+    if "paid_plan_required" in b or "library voice" in b:
+        return "plan"
     if status == 402:
         return "quota"
     if status == 429:
@@ -383,8 +393,10 @@ async def post_audio(provider, url, headers, payload):
 
 async def cartesia_tts(text, s, lang):
     voice_id = (s.get("cartesia_voice_bn") or CARTESIA_VOICE_BN) if lang == "bn" else (s.get("cartesia_voice_en") or CARTESIA_VOICE_EN)
-    if not CARTESIA_API_KEY or not voice_id:
-        raise TTSError("cartesia", "config", "API key or voice ID is not set")
+    if not CARTESIA_API_KEY:
+        raise TTSError("cartesia", "config", "API key missing: set CARTESIA_API_KEY and restart the bot")
+    if not voice_id:
+        raise TTSError("cartesia", "config", f"no {lang} voice selected: Voice > Voice library > Use, then Save")
     rate = max(0.6, min(1.5, 1.0 + float(s.get("rate", 0)) / 200))
     volume = max(0.5, min(2.0, 1.0 + float(s.get("volume", 0)) / 50))
     payload = {
@@ -400,8 +412,10 @@ async def cartesia_tts(text, s, lang):
 
 async def elevenlabs_tts(text, s, lang):
     voice_id = (s.get("elevenlabs_voice_bn") or os.getenv("ELEVENLABS_VOICE_BN", "").strip()) if lang == "bn" else (s.get("elevenlabs_voice_en") or os.getenv("ELEVENLABS_VOICE_EN", "").strip())
-    if not ELEVENLABS_API_KEY or not voice_id:
-        raise TTSError("elevenlabs", "config", "API key or voice ID is not set")
+    if not ELEVENLABS_API_KEY:
+        raise TTSError("elevenlabs", "config", "API key missing: set ELEVENLABS_API_KEY and restart the bot")
+    if not voice_id:
+        raise TTSError("elevenlabs", "config", f"no {lang} voice selected: Voice > Voice library > Use, then Save")
     speed = max(0.7, min(1.2, 1.0 + float(s.get("rate", 0)) / 250))
     payload = {"text": text, "model_id": os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2"),
                "voice_settings": {"stability": 0.5, "similarity_boost": 0.75, "speed": speed}}
@@ -432,8 +446,10 @@ async def tts_full(text, s, lang=None):
             errors.append(err)
             if provider != "both":
                 raise TTSFailure(str(err)) from exc
-    if provider != "edge":
+    if provider not in ("edge", "both"):
         raise TTSFailure("; ".join(str(e) for e in errors) or "No voice provider is configured")
+    if errors:
+        log.info("All API providers failed; falling back to Edge TTS")
     voice = s["voice_bn"] if lang == "bn" else s["voice_en"]
     c = edge_tts.Communicate(text, voice, rate=f"{max(-50, min(100, s['rate'])):+d}%",
                              volume=f"{max(-50, min(50, s['volume'])):+d}%",
@@ -636,7 +652,8 @@ async def api_state(req):
     out = {"role": r, "uid": uid, "in_tg": bool(req.headers.get("X-Init"))}
     if r not in ("owner", "admin"): return web.json_response(out)
     out["keys"] = {"cartesia": bool(CARTESIA_API_KEY), "elevenlabs": bool(ELEVENLABS_API_KEY)}
-    out["status"] = {p: {"ok": v["ok"], "kind": v["kind"]} for p, v in pstat.items()}
+    out["status"] = {p: {"ok": None if (v["ok"] is False and time.time() - v["ts"] > 1800) else v["ok"], "kind": v["kind"]}
+                     for p, v in pstat.items()}
     chats = [{"id": "__global__", "title": "Global defaults (all groups)",
               "s": base_cfg(),
               "stats": stats_view({"stats": {"voices": 0, "chars": 0}}), "pending": 0}]

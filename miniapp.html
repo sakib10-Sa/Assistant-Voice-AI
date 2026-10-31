@@ -40,8 +40,15 @@ input[type=range]{width:100%;accent-color:var(--ac);margin:8px 0 0}
 .bars b{width:100%;background:linear-gradient(180deg,var(--ac),rgba(10,132,255,.4));border-radius:6px 6px 2px 2px;min-height:3px;transition:height .4s}.bars span{font-size:10px;color:var(--mut)}
 .pb{height:6px;border-radius:3px;background:var(--fill);overflow:hidden;margin:4px 0 8px}.pb b{display:block;height:100%;background:var(--ac)}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:2px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:rgba(20,20,22,.78);border-top:.5px solid var(--line);z-index:6;-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
-nav button{flex:1;max-width:120px;border:0;background:none;color:var(--mut);padding:4px 0;font-family:inherit;font-weight:500;font-size:11px;border-radius:10px;transition:color .2s}nav button span{display:block;font-size:22px;line-height:1.2}
+nav button{flex:1;max-width:120px;border:0;background:none;color:var(--mut);padding:4px 0;font-family:inherit;font-weight:500;font-size:11px;border-radius:10px;transition:color .2s}nav button span{display:block;height:26px;line-height:1}nav button svg{display:block;margin:0 auto 2px}
 nav button.on{color:var(--ac)}
+/* floating liquid-glass nav */
+nav{left:50%;right:auto;transform:translateX(-50%);width:calc(100% - 28px);max-width:430px;bottom:calc(12px + env(safe-area-inset-bottom));padding:7px;gap:4px;border-radius:32px;border:.5px solid rgba(255,255,255,.2);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.03) 45%,rgba(255,255,255,.07)),rgba(24,24,28,.5);box-shadow:0 14px 36px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(255,255,255,.05);-webkit-backdrop-filter:blur(26px) saturate(190%);backdrop-filter:blur(26px) saturate(190%);overflow:hidden}
+nav:before{content:"";position:absolute;left:12%;right:12%;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);pointer-events:none}
+nav button{border-radius:24px;padding:7px 0 5px;position:relative}
+nav button.on{background:rgba(255,255,255,.11);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.14)}
+#m{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+
 .item{display:flex;gap:8px;align-items:center;padding:9px 0}.item+.item{border-top:.5px solid var(--line)}.item .t{flex:1;min-width:0}.item .t div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tag{display:inline-block;padding:3px 9px;border-radius:20px;background:var(--fill);font-size:12px;color:var(--mut)}.tag.ok{color:var(--ok)}.tag.bad{color:var(--red)}
 .alert{background:rgba(255,69,58,.14);box-shadow:inset 0 0 0 1px rgba(255,69,58,.4)}.alert b{color:var(--red)}.alert div{font-size:13px;margin-top:2px}
@@ -73,7 +80,7 @@ async function api(p,b,raw){const o={headers:{...hdr(),'Content-Type':'applicati
   const r=await fetch(p,o);if(!r.ok){const e=new Error((await r.text())||r.status);e.status=r.status;throw e}return raw?r:r.json()}
 function toast(t,bad){const e=$('#toast');e.textContent=t||'Saved ✓';e.style.background=bad?'var(--red)':'';e.classList.add('on');clearTimeout(lt);lt=setTimeout(()=>e.classList.remove('on'),bad?3800:1400)}
 const C=()=>(S.chats||[]).find(c=>c.id==cur);
-const TABS=[['home','📊','Home'],['targets','🎯','Targets'],['voice','🎙','Voice'],['hist','🕘','History'],['more','⚙️','More']];
+const TABS=[['home','<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg>','Home'],['targets','<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>','Targets'],['voice','<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/><path d="M9 21h6"/></svg>','Voice'],['hist','<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>','History'],['more','<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8"/></svg>','More']];
 
 async function load(keep){
   try{S=await api('/api/state')}catch(e){
@@ -112,8 +119,8 @@ const sld=(k,l,a,b,u='')=>`<div style="padding:6px 0"><div class="row" style="pa
 const sel=(k,l,o)=>`<div class="row"><span>${l}</span><select style="width:58%" onchange="set('${k}',this.value,${k=='provider'||k=='lang'});autoPrev()">${o.map(([v,t])=>`<option value="${esc(v)}" ${C().s[k]==v?'selected':''}>${esc(t)}</option>`).join('')}</select></div>`;
 const vname=v=>v.split('-').slice(2).join(' ').replace('Neural','')+' ('+v.slice(0,5)+')';
 
-const SHORT={quota:'Out of credits',auth:'Key rejected',rate:'Rate limited',voice:'Voice ID problem',server:'Unreachable',other:'Error',config:'Not set'};
-const FIX={quota:'Credits or monthly quota used up. Add credits, or switch provider in Voice > Provider.',auth:'The API key was rejected. Check the key in your server settings.',rate:'Too many requests right now. This usually clears by itself.',voice:'The voice ID was not accepted. Check it in Voice > Voice library.',server:'The service is unreachable right now. It usually recovers by itself.',other:'The last request failed.'};
+const SHORT={quota:'Out of credits',plan:'Plan blocks voice',auth:'Key rejected',rate:'Rate limited',voice:'Voice ID problem',server:'Unreachable',other:'Error',config:'Not set'};
+const FIX={plan:'Free plan cannot use Voice Library voices via API. Use a Default voice (e.g. Sarah), add $5 credits, or use Edge TTS.',quota:'Credits or monthly quota used up. Add credits, or switch provider in Voice > Provider.',auth:'The API key was rejected. Check the key in your server settings.',rate:'Too many requests right now. This usually clears by itself.',voice:'The voice ID was not accepted. Check it in Voice > Voice library.',server:'The service is unreachable right now. It usually recovers by itself.',other:'The last request failed.'};
 const PN={cartesia:'Cartesia',elevenlabs:'ElevenLabs'};
 const bad=p=>S.keys[p]&&(S.status||{})[p]&&S.status[p].ok===false;
 const alerts=()=>['cartesia','elevenlabs'].filter(bad).map(p=>`<div class="card s4 alert"><b>${PN[p]}: ${SHORT[S.status[p].kind]||'Error'}</b><div>${FIX[S.status[p].kind]||FIX.other}</div></div>`).join('');
