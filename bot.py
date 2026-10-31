@@ -615,7 +615,9 @@ def verify_user(init):
     except Exception: return None
 
 def make_token(uid):
-    p = base64.urlsafe_b64encode(json.dumps({"u": uid, "e": int(time.time()) + 7 * 86400}).encode()).decode()
+    sid = secrets.token_hex(8)  # a new login replaces the old session, so only one device stays signed in
+    db.setdefault("sess", {})[str(uid)] = {"sid": sid, "ts": int(time.time())}; save()
+    p = base64.urlsafe_b64encode(json.dumps({"u": uid, "s": sid, "e": int(time.time()) + 7 * 86400}).encode()).decode()
     return p + "." + hmac.new(SESSION_SECRET, p.encode(), hashlib.sha256).hexdigest()[:32]
 
 def check_token(t):
@@ -623,7 +625,8 @@ def check_token(t):
         p, sig = t.split(".")
         if not hmac.compare_digest(sig, hmac.new(SESSION_SECRET, p.encode(), hashlib.sha256).hexdigest()[:32]): return None
         d = json.loads(base64.urlsafe_b64decode(p.encode()))
-        return d["u"] if d["e"] > time.time() else None
+        if d["e"] <= time.time() or db.get("sess", {}).get(str(d["u"]), {}).get("sid") != d.get("s"): return None
+        return d["u"]
     except Exception:
         return None
 
@@ -672,8 +675,11 @@ async def api_state(req):
     out.update(chats=chats, voice_lib=lib(), voices=VOICES, providers=list(PROVIDERS), presets=list(PRESETS),
                login=next((n for n, v in db.get("creds", {}).items() if v["uid"] == uid), ""),
                backup=bool(backup_target()), backup_avail=bool(BACKUP_CHAT))
+    lg = {str(v["uid"]): n for n, v in db.get("creds", {}).items()}
+    out["me"] = {"name": (db.get("admins", {}).get(str(uid), {}).get("name") or ("Owner" if r == "owner" else "Admin")),
+                 "login": lg.get(str(uid), ""), "via": "browser" if req.headers.get("X-Token") else "telegram"}
     if r == "owner":
-        out["admins"] = [{"uid": k, **v} for k, v in db.get("admins", {}).items()]
+        out["admins"] = [{"uid": k, **v, "login": lg.get(k, ""), "online": k in db.get("sess", {})} for k, v in db.get("admins", {}).items()]
         out["requests"] = [{"uid": k, **v} for k, v in db.get("requests", {}).items()]
     return web.json_response(out)
 
@@ -760,7 +766,16 @@ async def api_admin(req):
     await need(req, owner=True)
     b = await req.json(); uid = int(b["uid"]); a = b["action"]
     if a in ("approve", "deny"): await decide(req.app["bot"], uid, a == "approve")
+    elif a in ("revoke", "signout"):
+        if a == "revoke":
+            for n in [n for n, v in db.get("creds", {}).items() if v["uid"] == uid]: db["creds"].pop(n)
+        db.get("sess", {}).pop(str(uid), None); save()
+    elif a == "add":
+        if uid <= 0: raise web.HTTPBadRequest(text="Invalid Telegram ID")
+        db.setdefault("admins", {})[str(uid)] = {"name": str(b.get("name", ""))[:40], "username": "", "ts": int(time.time())}
+        db.get("requests", {}).pop(str(uid), None); save()
     elif a == "remove":
+        db.get("sess", {}).pop(str(uid), None)
         db.get("admins", {}).pop(str(uid), None)
         for n in [n for n, v in db.get("creds", {}).items() if v["uid"] == uid]: db["creds"].pop(n)
         save()
@@ -788,9 +803,14 @@ async def api_login(req):
 
 async def api_creds(req):
     uid, b = await need(req), await req.json()
+    caller = uid
+    if b.get("uid") and uid in OWNERS:  # the owner can set a login for any approved admin
+        uid = int(b["uid"])
+        if not is_staff(uid): raise web.HTTPBadRequest(text="Not an approved admin")
     if b.get("remove"):
         cr = db.setdefault("creds", {})
         for n in [n for n, v in cr.items() if v["uid"] == uid]: cr.pop(n)
+        db.get("sess", {}).pop(str(uid), None)
         save()
         return web.json_response({"ok": True})
     u, p = str(b.get("username", "")).strip().lower(), str(b.get("password", ""))
@@ -799,7 +819,14 @@ async def api_creds(req):
     cr = db.setdefault("creds", {})
     if u in cr and cr[u]["uid"] != uid or u == PANEL_USER: raise web.HTTPConflict(text="Username taken")
     for n in [n for n, v in cr.items() if v["uid"] == uid]: cr.pop(n)
-    salt, h = hash_pw(p); cr[u] = {"uid": uid, "salt": salt, "hash": h}; save()
+    salt, h = hash_pw(p); cr[u] = {"uid": uid, "salt": salt, "hash": h}
+    if uid != caller: db.get("sess", {}).pop(str(uid), None)  # new password signs the admin out everywhere
+    save()
+    return web.json_response({"ok": True})
+
+async def api_logout(req):
+    uid, _ = auth(req)
+    if uid is not None: db.get("sess", {}).pop(str(uid), None); save()
     return web.json_response({"ok": True})
 
 async def api_backup(req):
@@ -1114,7 +1141,7 @@ async def post_init(app):
     w.add_routes([web.get("/", health), web.get("/health", health), web.get("/app", page), web.get("/api/state", api_state),
                   web.post("/api/save", api_save), web.post("/api/voice", api_voice), web.post("/api/action", api_action),
                   web.post("/api/preview", api_preview), web.post("/api/request", api_request),
-                  web.post("/api/login", api_login), web.post("/api/creds", api_creds), web.post("/api/backup", api_backup),
+                  web.post("/api/login", api_login), web.post("/api/creds", api_creds), web.post("/api/backup", api_backup), web.post("/api/logout", api_logout),
                   web.post("/api/admin", api_admin), web.get("/api/history", api_history),
                   web.post("/api/hist", api_hist), web.get("/api/histaudio", api_histaudio)])
     runner = web.AppRunner(w); await runner.setup()
