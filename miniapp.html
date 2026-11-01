@@ -202,6 +202,32 @@ html[data-th=light] nav,html[data-th=light] .savebar{background:linear-gradient(
 .empty{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:14px 8px 18px;color:var(--mut)}.empty svg{opacity:.65}.empty b{color:var(--tx)}.empty span{font-size:13px;max-width:290px}
 .nf{position:relative;width:92px;flex:none}.nf input{padding-right:34px}.nf i{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-style:normal;font-size:12px;color:var(--mut);pointer-events:none}
 html.nt *,html.nt *:before,html.nt *:after{transition:none!important;animation:none!important}
+/* ---- v9: clear liquid glass, no double-render flash, login ---- */
+#m{animation:none}
+nav,.savebar{background:linear-gradient(180deg,rgba(255,255,255,calc(.07*var(--gi,1))),rgba(255,255,255,0) 60%),rgba(255,255,255,var(--gt,.12));-webkit-backdrop-filter:blur(var(--gb,8px)) saturate(170%);backdrop-filter:blur(var(--gb,8px)) saturate(170%);border:0;box-shadow:0 18px 40px -12px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.18)}
+html:not(.no-ig) nav,html:not(.no-ig) .savebar{box-shadow:inset 0 0 22px rgba(255,255,255,calc(.13*var(--gi,1))),inset 0 -8px 16px -8px rgba(255,255,255,calc(.1*var(--gi,1))),0 18px 40px -12px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.18)}
+nav:before{content:"";position:absolute;inset:0;height:auto;border-radius:inherit;pointer-events:none;background:radial-gradient(75% 55% at 50% -12%,rgba(255,255,255,calc(.5*var(--gi,1))),transparent 70%),linear-gradient(180deg,rgba(255,255,255,calc(.2*var(--gi,1))),transparent 42%);box-shadow:none}
+nav:after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,calc(.95*var(--gi,1))),rgba(255,255,255,.08) 28%,rgba(255,255,255,.04) 62%,rgba(255,255,255,calc(.7*var(--gi,1))));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;box-shadow:none}
+html.no-ig nav:after{display:block}html.no-gb nav:after{display:none}
+html.rf nav{-webkit-backdrop-filter:url(#lgf) blur(var(--gb,8px)) saturate(170%);backdrop-filter:url(#lgf) blur(var(--gb,8px)) saturate(170%)}
+nav .pill{background:linear-gradient(180deg,rgba(255,255,255,calc(.2*var(--gi,1))),rgba(255,255,255,calc(.04*var(--gi,1)))),rgba(255,255,255,.05);box-shadow:inset 1.5px 1.5px 1px -.5px rgba(255,255,255,calc(.8*var(--gi,1))),inset -1.5px -1.5px 1px -.5px rgba(255,255,255,calc(.4*var(--gi,1))),inset 0 0 14px rgba(255,255,255,calc(.1*var(--gi,1))),0 0 18px rgba(100,210,255,.2),0 6px 14px rgba(0,0,0,.22)}
+html[data-th=light] nav,html[data-th=light] .savebar{background:linear-gradient(180deg,rgba(255,255,255,calc(.5*var(--gi,1))),rgba(255,255,255,0) 60%),rgba(255,255,255,calc(var(--gt,.12) + .2));box-shadow:0 14px 32px -10px rgba(0,0,0,.25),inset 0 0 20px rgba(255,255,255,.55)}
+html[data-th=light] nav:after{background:linear-gradient(135deg,#fff,rgba(0,0,0,.09) 30%,rgba(0,0,0,.05) 65%,#fff)}
+.pw{position:relative}.pw input{padding-right:48px}.pw button{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--mut);padding:8px 10px;min-height:40px;font:inherit;font-size:13px;font-weight:600}
+.lerr{min-height:20px;color:var(--red);font-size:13px;margin:8px 0 2px}.lerr.sh{animation:shk .42s}
+@keyframes shk{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.lk{display:flex;justify-content:space-between;margin-top:14px;font-size:13px}.lk button{border:0;background:none;color:var(--mut);padding:6px 2px;font:inherit}
+.btn.ld{opacity:.65}
+/* ---- v10: cheap animated login, scope bar ---- */
+#hd{display:none!important}
+.scope{display:flex;align-items:center;gap:6px;padding:10px 14px;margin-bottom:12px;border-radius:14px;background:var(--fill);font-size:13px;color:var(--mut);cursor:pointer}.scope b{color:var(--tx);font-weight:600}.scope span{margin-left:auto;color:var(--ac);font-weight:600}.scope:active{opacity:.7}
+body.lg:before{inset:-12%;background:radial-gradient(60% 45% at 20% 25%,rgba(94,92,230,.8),transparent 70%),radial-gradient(55% 45% at 85% 20%,rgba(255,55,95,.6),transparent 70%),radial-gradient(60% 50% at 75% 85%,rgba(10,132,255,.7),transparent 70%),radial-gradient(50% 40% at 15% 85%,rgba(255,159,10,.5),transparent 70%);filter:none;opacity:1;animation:drift 22s ease-in-out infinite alternate;will-change:transform}
+@keyframes drift{to{transform:translate3d(3%,-2%,0) scale(1.08) rotate(4deg)}}
+.orb{display:none}
+.login{-webkit-backdrop-filter:none;backdrop-filter:none;background:linear-gradient(160deg,rgba(255,255,255,.2),rgba(255,255,255,.05)),rgba(24,24,32,.62)}
+html[data-th=light] .login{background:linear-gradient(160deg,rgba(255,255,255,.92),rgba(255,255,255,.66))}
+.login>*{animation-duration:.45s}.login input{transition:box-shadow .2s,border-color .2s}
+.foot{margin-top:16px;text-align:center;font-size:12px;color:var(--mut)}.foot b{color:var(--tx);font-weight:600}
 </style></head>
 <body>
 <header id="hd" hidden><select id="chat"></select></header><div class="savebar" id="sb" hidden><span id="sv">Unsaved changes</span><button class="btn pri sm" onclick="saveNow()">Save</button></div>
@@ -212,7 +238,7 @@ const tg=(window.Telegram&&Telegram.WebApp)||{initData:'',ready(){},expand(){}};
 const $=s=>document.querySelector(s),ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k):v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let S={},cur=null,tab='home',tm,D={},live=false,hist=[],hfav=false,lt;
-const hdr=()=>({...(tg.initData?{'X-Init':tg.initData}:{}),...(ls('vb_t')?{'X-Token':ls('vb_t')}:{})});
+const hdr=()=>({...(tg.initData?{'X-Init':tg.initData}:{})});
 async function api(p,b,raw){const o={headers:{...hdr(),'Content-Type':'application/json'}};if(b!==undefined){o.method='POST';o.body=JSON.stringify(b)}
   const r=await fetch(p,o);if(!r.ok){const e=new Error((await r.text())||r.status);e.status=r.status;throw e}return raw?r:r.json()}
 function toast(t,bad){const e=$('#toast');e.textContent=t||'Saved ✓';e.style.background=bad?'var(--red)':'';e.classList.add('on');clearTimeout(lt);lt=setTimeout(()=>e.classList.remove('on'),bad?3800:1400)}
@@ -232,18 +258,26 @@ async function load(keep){
 function loginView(pending){document.body.classList.add('lg');$('#hd').hidden=$('#nv').hidden=true;
   $('#m').innerHTML=`<div class="lwrap"><i class="orb o1"></i><i class="orb o2"></i><div class="card login"><div class="lock"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.5" r="1.2" fill="currentColor"/></svg></div><div class="big">Secure Login</div><div class="mut">Admin Control Panel</div>
   ${pending?'<div class="note">Your access is waiting for owner approval.</div>':''}
-  <label class="l">Username</label><input type="text" id="lu" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Username">
-  <label class="l">Password</label><input type="password" id="lp" autocomplete="current-password" placeholder="Password" onkeydown="if(event.key=='Enter')doLogin()">
-  <button class="btn pri" id="lb" onclick="doLogin()">Unlock Panel</button>
-  <div class="mut hint">Only approved admins can sign in. Ask the owner if you need access.</div></div></div>`}
-async function doLogin(){const b=$('#lb');b.disabled=true;
-  try{const r=await api('/api/login',{username:$('#lu').value,password:$('#lp').value});ls('vb_t',r.token);load()}
-  catch(e){b.disabled=false;toast((e.message||'Login failed').slice(0,80),1)}}
+  <label class="l" for="lu">Username</label><input type="text" id="lu" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="64" value="${esc(ls('vb_u')||'')}">
+  <label class="l" for="lp">Password</label><div class="pw"><input type="password" id="lp" autocomplete="current-password" maxlength="256" onkeydown="if(event.key=='Enter')doLogin()"><button type="button" onclick="pwShow(this)" aria-label="Show password">Show</button></div>
+  <div id="lcw" hidden><label class="l" for="lc">Authenticator code</label><input type="text" id="lc" inputmode="numeric" autocomplete="one-time-code" maxlength="8" onkeydown="if(event.key=='Enter')doLogin()"></div>
+  <div id="le" class="lerr" role="alert" aria-live="polite"></div>
+  <div class="row" style="padding:0 0 10px"><span>Remember me</span><label class="sw"><input type="checkbox" id="lr" checked><i></i></label></div>
+  <button class="btn pri" id="lb" onclick="doLogin()">Log in</button>
+  <div class="lk"><button type="button" onclick="toast('Ask the owner to reset your login.')">Forgot password?</button><button type="button" onclick="toast('Open the bot in Telegram and send /start to request access.')">Create an account</button></div>
+  <div class="mut hint">Only approved admins can sign in. Ask the owner if you need access.</div></div><div class="foot">Panel by <b>@${OWNER_TAG}</b></div></div>`}
+function LE(t){const e=$('#le');if(!e)return;e.textContent=t;e.classList.remove('sh');void e.offsetWidth;e.classList.add('sh')}
+function pwShow(b){const i=$('#lp'),s=i.type=='password';i.type=s?'text':'password';b.textContent=s?'Hide':'Show'}
+async function doLogin(){const b=$('#lb');if(b.disabled)return;b.disabled=true;b.classList.add('ld');LE('');
+  try{await api('/api/login',{username:$('#lu').value,password:$('#lp').value,code:($('#lc')||{}).value||'',remember:$('#lr').checked});ls('vb_u',$('#lr').checked?$('#lu').value.trim().toLowerCase():null);$('#lp').value='';load()}
+  catch(e){b.disabled=false;b.classList.remove('ld');
+    if(e.message=='MFA_REQUIRED'){$('#lcw').hidden=false;$('#lc').focus();return LE('Enter the 6-digit code from your authenticator app.')}
+    LE(e.status==429?e.message:'Invalid username or password')}}
 
 function render(){
   navSync();
   const c=C();if(!c){$('#m').innerHTML='<div class="center"><div class="big">No groups yet</div><div class="mut">Add the bot to a group and send one message there. The group will then show up here. You must be an admin of that group.</div></div>'+(tab=='more'?V.more():'');return}
-  $('#m').innerHTML=V[tab]();if(tab=='hist')loadHist()}
+  $('#m').innerHTML=(tab=='more'?'':scopeBar())+V[tab]();if(tab=='hist')loadHist()}
 $('#chat').onchange=async e=>{await saveNow();cur=e.target.value;render()};
 
 function set(k,v,re){C().s[k]=v;mark(k);if(re)render()}
@@ -301,13 +335,14 @@ hist(){return `<div class="bento"><div class="card s4"><div class="chips"><butto
 more(){const c=C(),own=S.role=='owner';return `<div class="bento">${c?`<div class="card s4"><h4>Filters</h4>${tog('read_names','Read sender name aloud')}${tog('strip_links','Replace links with the word link')}${tog('strip_emoji','Remove emojis')}${tog('caption','Add text caption to voice')}${tog('reply','Reply directly to the message')}${sld('min_chars','Minimum characters',1,100)}${sld('max_chars','Max characters per voice',40,5000)}</div>`:''}
  ${c&&cur!='__global__'?`<div class="card s4"><button class="btn red" style="width:100%" onclick="resetChat()">↺ Reset this group to global defaults</button></div>`:''}
  ${own?`<div class="card s4"><h4>Telegram backup</h4><div class="row" style="padding:0"><span>Send settings backup to Telegram</span><label class="sw"><input type="checkbox" ${S.backup?'checked':''} ${S.backup_avail?'':'disabled'} onchange="setBackup(this.checked)"><i></i></label></div><div class="hint">${S.backup_avail?'Off stops new backup files. Your data is then kept only on the host disk, which some hosts wipe on redeploy.':'Unavailable: BACKUP_CHAT_ID is set to off, or no owner ID is configured.'}</div></div>`:''}
+ <div class="card s4"><h4>Groups</h4><div class="hint" style="margin:-4px 0 8px">Groups where the bot is added. Pick the one you want to edit.</div>${(S.chats||[]).map(c=>`<div class="item"><div class="t"><b>${esc(c.title||c.id)}</b><div class="mut">${c.id=='__global__'?'Applies to all groups':'ID '+esc(c.id)}</div></div><button class="btn sm use ${c.id==cur?'on':''}" onclick="pickChat('${c.id}')">${c.id==cur?'Editing':'Edit'}</button></div>`).join('')||'<div class="empty"><b>No groups yet</b><span>Add the bot to a group and send one message there.</span></div>'}</div>
  <div class="card s4"><h4>Appearance</h4><div class="seg">${[['dark','Dark'],['light','Light'],['system','System Auto']].map(([v,t])=>`<button class="${PREF.th==v?'on':''}" onclick="setPref('th','${v}',event)">${t}</button>`).join('')}</div>
  <label class="l">Accent color</label><div class="sws">${ACC.map(([n,c])=>`<button style="background:rgb(${c});color:rgb(${c})" class="${PREF.ac==c?'on':''}" aria-label="${n}" onclick="setPref('ac','${c}')"></button>`).join('')}</div>
- <h4 style="margin-top:14px">Liquid glass</h4>${gs('gb','Background blur',0,40,'px')}${gs('gt','Transparency',10,90,'%')}${gs('gi','Glass intensity',0,100,'%')}<div class="row"><span>Specular reflection</span><label class="sw"><input type="checkbox" ${PREF.sr?'checked':''} onchange="setPref('sr',this.checked)"><i></i></label></div><div class="row"><span>Inner glow</span><label class="sw"><input type="checkbox" ${PREF.ig?'checked':''} onchange="setPref('ig',this.checked)"><i></i></label></div><div class="row"><span>Glass border</span><label class="sw"><input type="checkbox" ${PREF.gbd?'checked':''} onchange="setPref('gbd',this.checked)"><i></i></label></div><button class="btn sm ghost" style="margin:12px 0" onclick="resetGlass()">Reset glass</button>
+ <h4 style="margin-top:14px">Liquid glass</h4>${gs('gb','Background blur',0,40,'px')}${gs('gt','Transparency',0,90,'%')}${gs('gi','Glass intensity',0,100,'%')}<div class="row"><span>Specular reflection</span><label class="sw"><input type="checkbox" ${PREF.sr?'checked':''} onchange="setPref('sr',this.checked)"><i></i></label></div><div class="row"><span>Inner glow</span><label class="sw"><input type="checkbox" ${PREF.ig?'checked':''} onchange="setPref('ig',this.checked)"><i></i></label></div><div class="row"><span>Glass border</span><label class="sw"><input type="checkbox" ${PREF.gbd?'checked':''} onchange="setPref('gbd',this.checked)"><i></i></label></div>${RFOK?`<div class="row"><span>Edge refraction (lens)</span><label class="sw"><input type="checkbox" ${PREF.rf?'checked':''} onchange="setPref('rf',this.checked);lgBuild()"><i></i></label></div>`:''}<button class="btn sm ghost" style="margin:12px 0" onclick="resetGlass()">Reset glass</button>
  <div class="row"><span>Reduce effects (saves battery)</span><label class="sw"><input type="checkbox" ${PREF.fx?'checked':''} onchange="setPref('fx',this.checked)"><i></i></label></div><div class="hint">Turns off blur and animations on slower phones. Saved on this device only.</div></div>
  ${own?`<div class="card s4"><div class="act" style="align-items:center"><h4>Security log</h4><button class="btn sm ghost" onclick="exportS()">Export settings</button></div><div class="tl">${(S.audit||[]).map(a=>`<div class="${/Failed/.test(a.w)?'bad':''}">${esc(a.w)}<small>${a.u?esc(nameOf(a.u)):'Unknown'} · ${new Date(a.t*1000).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</small></div>`).join('')||'<div class="mut">No events yet</div>'}</div></div>`:''}
  <div class="card s4"><h4>Browser login</h4><div class="me"><b>${esc(S.me?.name||'')}</b>${S.me?.login?'<span class="mut">@'+esc(S.me.login)+'</span>':''}<span class="tag ok">${S.me?.via=='browser'?'Browser session':'Telegram'}</span></div><div class="row" style="padding:0"><span>Enable browser login</span><label class="sw"><input type="checkbox" ${S.login?'checked':''} onchange="loginToggle(this)"><i></i></label></div>
- <div class="hint">${S.login?'Signed up as <b>'+esc(S.login)+'</b>.':'Lets you open this panel in a normal browser.'}</div>${S.login?'<div class="g g2" style="margin-top:10px"><button class="btn sm ghost" onclick="credSheet()">Change</button>'+(ls('vb_t')?'<button class="btn sm red" onclick="doLogout()">Logout</button>':'<span></span>')+'</div>':''}</div>
+ <div class="hint">${S.login?'Signed up as <b>'+esc(S.login)+'</b>.':'Lets you open this panel in a normal browser.'}</div>${S.login?`<div class="row" style="padding:6px 0 0"><span>Two-step verification (TOTP)</span><label class="sw"><input type="checkbox" ${S.mfa?'checked':''} onchange="mfaToggle(this)"><i></i></label></div>`:''}${S.login?'<div class="g g2" style="margin-top:10px"><button class="btn sm ghost" onclick="credSheet()">Change</button>'+(S.me?.via=='browser'?'<button class="btn sm red" onclick="doLogout()">Logout</button>':'<span></span>')+'</div>':''}</div>
  ${own?`<div class="card s4"><h4>Admin approvals</h4>${(S.requests||[]).map(r=>`<div class="item"><div class="t"><div><b>${esc(r.name)}</b> @${esc(r.username)}</div><div class="mut">ID ${r.uid}</div></div><button class="btn sm pri" onclick="adm('approve',${r.uid})">Approve</button><button class="btn sm red" onclick="adm('deny',${r.uid})">Deny</button></div>`).join('')||'<div class="mut">No pending requests</div>'}
  <div class="act" style="margin-top:14px"><h4>Approved admins</h4><button class="btn sm pri" onclick="addAdmin()">Add admin</button></div>${(S.admins||[]).map(r=>`<div class="item" style="flex-wrap:wrap"><div class="t" style="flex:1 1 100%"><div><b>${esc(r.name||'Admin')}</b> ${r.username?'@'+esc(r.username):''} ${r.online?'<span class="tag ok">online</span>':''}</div><div class="mut">ID ${r.uid} · ${r.login?'Login @'+esc(r.login):'No browser login'}</div></div><div class="acts"><button class="btn sm ghost" onclick="credSheet(${r.uid})">${r.login?'Change login':'Set login'}</button>${r.online?`<button class="btn sm ghost" onclick="adm('signout',${r.uid})">Sign out</button>`:''}${r.login?`<button class="btn sm ghost" onclick="ask('Revoke browser login for this admin? They stay approved in Telegram.',()=>adm('revoke',${r.uid}))">Revoke login</button>`:''}<button class="btn sm red" onclick="ask('Remove this admin completely?',()=>adm('remove',${r.uid}))">Remove</button></div></div>`).join('')||'<div class="mut">No admins yet</div>'}</div>`:''}</div>`}
 };
@@ -352,7 +387,7 @@ load();
 /* ---- v4 helpers ---- */
 const ACC=[['Blue','10,132,255'],['Purple','191,90,242'],['Pink','255,55,95'],['Orange','255,159,10'],['Green','48,209,88'],['Teal','100,210,255']];
 const nameOf=u=>(S.admins||[]).find(a=>a.uid==u)?.name||(u==S.uid?'You':'Owner');
-const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('vb_pref')||'{}')}catch(e){}return{th:p.th||'dark',ac:p.ac||'10,132,255',fx:!!p.fx,gb:p.v==2?p.gb:14,gt:p.v==2?p.gt:30,gi:p.v==2?p.gi:100,sr:p.sr!==false,ig:p.ig!==false,gbd:p.gbd!==false,v:2}})();
+const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('vb_pref')||'{}')}catch(e){}return{th:p.th||'dark',ac:p.ac||'10,132,255',fx:!!p.fx,gb:p.v==3?p.gb:8,gt:p.v==3?p.gt:12,gi:p.v==3?p.gi:100,sr:p.sr!==false,ig:p.ig!==false,gbd:p.gbd!==false,rf:p.rf!==false,v:3}})();
 const mq=window.matchMedia?matchMedia('(prefers-color-scheme: light)'):null;
 function applyPref(){const h=document.documentElement,l=PREF.th=='light'||(PREF.th=='system'&&mq&&mq.matches);h.dataset.th=l?'light':'dark';
   h.style.setProperty('--ac','rgb('+PREF.ac+')');h.style.setProperty('--acrgb',PREF.ac);h.classList.toggle('lite',PREF.fx);h.style.setProperty('--gb',PREF.gb+'px');h.style.setProperty('--gt',PREF.gt/100);h.style.setProperty('--gi',PREF.gi/100);h.classList.toggle('no-sr',!PREF.sr);h.classList.toggle('no-ig',!PREF.ig);h.classList.toggle('no-gb',!PREF.gbd);
@@ -361,7 +396,7 @@ function persist(){try{localStorage.setItem('vb_pref',JSON.stringify(PREF))}catc
 const RM=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
 function setPref(k,v){const h=document.documentElement;PREF[k]=v;persist();if(k=='th'){h.classList.add('nt');applyPref();render();requestAnimationFrame(()=>requestAnimationFrame(()=>h.classList.remove('nt')))}else{applyPref();render()}}
 let gtm,gq=0,gv={};function setGlass(k,v){PREF[k]=+v;gv[k]=v;if(!gq)gq=requestAnimationFrame(()=>{gq=0;const h=document.documentElement.style;h.setProperty('--gb',PREF.gb+'px');h.setProperty('--gt',PREF.gt/100);h.setProperty('--gi',PREF.gi/100);for(const q in gv){const e=$('#g_'+q);if(e)e.textContent=gv[q]+(q=='gb'?'px':'%')}gv={}});clearTimeout(gtm);gtm=setTimeout(persist,300)}
-function resetGlass(){Object.assign(PREF,{gb:14,gt:30,gi:100,sr:true,ig:true,gbd:true});persist();applyPref();render();toast('Glass reset')}
+function resetGlass(){Object.assign(PREF,{gb:8,gt:12,gi:100,sr:true,ig:true,gbd:true,rf:true});persist();applyPref();lgBuild();render();toast('Glass reset')}
 function resetTune(){const s=C().s;['rate','pitch','volume'].forEach(k=>{if(s[k]!==0){s[k]=0;mark(k)}});render();toast('Tuning reset')}
 function gs(k,l,a,b,u){return `<div class="act" style="margin-top:12px;align-items:center"><span>${l}</span><span class="val" id="g_${k}">${PREF[k]}${u}</span></div><input type="range" min="${a}" max="${b}" value="${PREF[k]}" style="--p:${(PREF[k]-a)/(b-a)*100}%" oninput="sp(this);setGlass('${k}',this.value)">`}
 function vClose(){const s=$('#sh');if(s.hidden||s.classList.contains('out'))return;const h=s.innerHTML;if(RM()||PREF.fx){s.hidden=true;return}s.classList.add('out');setTimeout(()=>{s.classList.remove('out');if(s.innerHTML===h)s.hidden=true},180)}
@@ -392,9 +427,11 @@ function graph(st){const d=st.daily||[],W=320,H=110,L=8,R=8,T=14,B=22;if(!d.leng
 setInterval(()=>{if(tab=='home'&&!document.hidden&&S.role&&!Object.keys(D[cur]||{}).length){LR=1;load().finally(()=>LR=0)}},20000);
 
 /* ---- v5 helpers ---- */
-function addAdmin(){$('#sh').innerHTML=`<div class="panel"><h4>Add admin</h4><div class="g"><label class="l" style="margin:0">Telegram ID</label><input type="text" id="aid" inputmode="numeric" placeholder="e.g. 123456789"><label class="l" style="margin:8px 0 0">Name (optional)</label><input type="text" id="an" placeholder="Display name"></div><br><div class="g g2"><button class="btn" onclick="vClose()">Cancel</button><button class="btn pri" onclick="doAddAdmin()">Add</button></div></div>`;$('#sh').hidden=false}
-async function doAddAdmin(){const id=+$('#aid').value.trim();if(!(id>0))return toast('Enter a valid Telegram ID',1);try{await api('/api/admin',{action:'add',uid:id,name:$('#an').value});vClose();toast('Admin added ✓');load()}catch(e){toast('Failed',1)}}
-async function doLogout(){try{await api('/api/logout',{})}catch(e){}ls('vb_t',null);load()}
+function addAdmin(){$('#sh').innerHTML=`<div class="panel"><h4>Add admin</h4><div class="g"><label class="l" for="aid">Telegram ID</label><input type="text" id="aid" inputmode="numeric" autocomplete="off" placeholder="e.g. 123456789"><div class="hint">They can send /start to @userinfobot to see their numeric ID.</div><label class="l" for="an" style="margin-top:8px">Name (optional)</label><input type="text" id="an" maxlength="40"><div class="row" style="padding:8px 0 0"><span>Also create browser login</span><label class="sw"><input type="checkbox" id="ac" onchange="$('#acw').hidden=!this.checked"><i></i></label></div><div id="acw" hidden><label class="l" for="au2">Username</label><input type="text" id="au2" autocapitalize="none" autocorrect="off" spellcheck="false"><label class="l" for="ap2" style="margin-top:8px">Password (6+ characters)</label><input type="password" id="ap2" autocomplete="new-password"></div></div><br><div class="g g2"><button class="btn" onclick="vClose()">Cancel</button><button class="btn pri" onclick="doAddAdmin()">Add admin</button></div></div>`;$('#sh').hidden=false}
+async function doAddAdmin(){const id=+$('#aid').value.trim();if(!Number.isInteger(id)||id<=0)return toast('Enter a valid Telegram ID',1);
+  const lg=$('#ac').checked,u=lg?$('#au2').value.trim():'',p=lg?$('#ap2').value:'';if(lg&&(u.length<3||p.length<6))return toast('Login needs a username and a 6+ character password',1);
+  try{await api('/api/admin',{action:'add',uid:id,name:$('#an').value});if(lg)await api('/api/creds',{username:u,password:p,uid:id});vClose();toast('Admin added ✓');load()}catch(e){toast((e.message||'Failed').slice(0,60),1)}}
+async function doLogout(){try{await api('/api/logout',{})}catch(e){}load()}
 
 /* ---- v7: haptics, ripple, count-up, stagger, spotlight, offline ---- */
 const hap=(t)=>{try{t=='sel'?tg.HapticFeedback.selectionChanged():tg.HapticFeedback.impactOccurred(t||'light')}catch(e){}};
@@ -417,5 +454,22 @@ async function exportS(){try{const d=await api('/api/export'),j=JSON.stringify(d
 /* ---- v8: pinned viewport (keyboard never moves the bar) ---- */
 let SH=0,SW=0;function vp(){const w=innerWidth,h=innerHeight;if(w!=SW){SW=w;SH=h}else if(h>SH)SH=h;const r=document.documentElement;r.style.setProperty('--sh',SH+'px');r.classList.toggle('kb',h<SH-110)}
 vp();addEventListener('resize',vp);try{tg.onEvent('viewportChanged',vp);tg.disableVerticalSwipes&&tg.disableVerticalSwipes()}catch(e){}
-if(window.ResizeObserver)new ResizeObserver(()=>{const h=$('#nv').offsetHeight;if(h)document.documentElement.style.setProperty('--nh',h+'px')}).observe($('#nv'));
+if(window.ResizeObserver)new ResizeObserver(()=>{const h=$('#nv').offsetHeight;if(h)document.documentElement.style.setProperty('--nh',h+'px');lgBuild()}).observe($('#nv'));
+
+/* ---- v9: two-step verification + liquid refraction ---- */
+async function mfaToggle(el){if(el.checked){try{const r=await api('/api/mfa',{action:'begin'});
+  $('#sh').innerHTML=`<div class="panel"><h4>Two-step verification</h4><div class="mut" style="margin:6px 0 10px;text-transform:none;letter-spacing:0">Add this key to an authenticator app (Google Authenticator, Authy, 1Password), then enter the 6-digit code.</div><input type="text" readonly value="${esc(r.secret)}" onfocus="this.select()" style="letter-spacing:.08em"><a class="mut" href="${esc(r.uri)}" style="display:block;margin:8px 0 12px">Open in authenticator app</a><input type="text" id="mc" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6-digit code"><br><br><div class="g g2"><button class="btn" onclick="vClose();render()">Cancel</button><button class="btn pri" onclick="mfaDo('confirm')">Enable</button></div></div>`;$('#sh').hidden=false}catch(e){toast('Failed',1);load()}}
+  else{$('#sh').innerHTML=`<div class="panel"><h4>Turn off two-step</h4><div class="mut" style="margin:6px 0 10px;text-transform:none;letter-spacing:0">Enter a current code to confirm.</div><input type="text" id="mc" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6-digit code"><br><br><div class="g g2"><button class="btn" onclick="vClose();render()">Cancel</button><button class="btn red" onclick="mfaDo('disable')">Turn off</button></div></div>`;$('#sh').hidden=false}}
+async function mfaDo(a){try{await api('/api/mfa',{action:a,code:$('#mc').value});vClose();toast(a=='confirm'?'Two-step enabled ✓':'Two-step off');load()}catch(e){toast('Invalid code',1)}}
+const RFOK=(()=>{try{return /Chrome\//.test(navigator.userAgent)&&!/Edg\/|OPR\/|CriOS|FxiOS/.test(navigator.userAgent)&&CSS.supports('backdrop-filter','url(#a)')}catch(e){return false}})();
+function lgBuild(){const r=document.documentElement,n=$('#nv'),w=Math.round(n.offsetWidth),h=Math.round(n.offsetHeight);if(!RFOK||!PREF.rf||!w||!h){r.classList.remove('rf');return}
+  const e=Math.round(Math.min(22,h/2.6)),g=(id,a,b,x,y)=>`<linearGradient id="${id}" x1="0" y1="0" x2="${x}" y2="${y}"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>`;
+  const map=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><defs>${g('l','rgb(255,128,128)','rgb(128,128,128)',1,0)}${g('r','rgb(128,128,128)','rgb(0,128,128)',1,0)}${g('t','rgb(128,255,128)','rgb(128,128,128)',0,1)}${g('b','rgb(128,128,128)','rgb(128,0,128)',0,1)}</defs><rect width="${w}" height="${h}" fill="rgb(128,128,128)"/><rect width="${e}" height="${h}" fill="url(#l)"/><rect x="${w-e}" width="${e}" height="${h}" fill="url(#r)"/><rect width="${w}" height="${e}" fill="url(#t)" opacity=".85"/><rect y="${h-e}" width="${w}" height="${e}" fill="url(#b)" opacity=".85"/></svg>`;
+  let s=$('#lgs');if(!s){document.body.insertAdjacentHTML('beforeend','<svg id="lgs" width="0" height="0" style="position:fixed;pointer-events:none" aria-hidden="true"></svg>');s=$('#lgs')}
+  s.innerHTML=`<filter id="lgf" x="0" y="0" width="${w}" height="${h}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feImage href="data:image/svg+xml,${encodeURIComponent(map)}" x="0" y="0" width="${w}" height="${h}" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="${Math.round(e*1.6)}" xChannelSelector="R" yChannelSelector="G"/></filter>`;r.classList.add('rf')}
+
+/* ---- v10 ---- */
+const OWNER_TAG='sakibXXL';
+const scopeBar=()=>`<div class="scope" onclick="goTab('more')"><i>◎</i>Editing <b>${esc((S.chats||[]).find(c=>c.id==cur)?.title||'Global defaults')}</b><span>Change</span></div>`;
+async function pickChat(id){await saveNow();cur=id;render();toast('Editing '+((S.chats||[]).find(c=>c.id==id)?.title||'group'))}
 </script></body></html>

@@ -614,10 +614,10 @@ def verify_user(init):
     try: return json.loads(d["user"])
     except Exception: return None
 
-def make_token(uid):
+def make_token(uid, ttl=7 * 86400):
     sid = secrets.token_hex(8)  # a new login replaces the old session, so only one device stays signed in
     db.setdefault("sess", {})[str(uid)] = {"sid": sid, "ts": int(time.time())}; save()
-    p = base64.urlsafe_b64encode(json.dumps({"u": uid, "s": sid, "e": int(time.time()) + 7 * 86400}).encode()).decode()
+    p = base64.urlsafe_b64encode(json.dumps({"u": uid, "s": sid, "e": int(time.time()) + ttl}).encode()).decode()
     return p + "." + hmac.new(SESSION_SECRET, p.encode(), hashlib.sha256).hexdigest()[:32]
 
 def check_token(t):
@@ -639,7 +639,7 @@ def hash_pw(pw, salt=None):
     return salt, hashlib.scrypt(pw.encode(), salt=salt.encode(), n=2 ** 14, r=8, p=1).hex()
 
 def auth(req):
-    uid = check_token(req.headers.get("X-Token", ""))  # a signed login wins, so staff can sign in anywhere
+    uid = check_token(req.cookies.get("vb_s", "") or req.headers.get("X-Token", ""))  # a signed login wins, so staff can sign in anywhere
     if uid: return uid, {"id": uid}
     u = verify_user(req.headers.get("X-Init", ""))
     return (u["id"], u) if u else (None, None)
@@ -681,7 +681,8 @@ async def api_state(req):
                backup=bool(backup_target()), backup_avail=bool(BACKUP_CHAT))
     lg = {str(v["uid"]): n for n, v in db.get("creds", {}).items()}
     out["me"] = {"name": (db.get("admins", {}).get(str(uid), {}).get("name") or ("Owner" if r == "owner" else "Admin")),
-                 "login": lg.get(str(uid), ""), "via": "browser" if req.headers.get("X-Token") else "telegram"}
+                 "login": lg.get(str(uid), ""), "via": "browser" if req.cookies.get("vb_s") else "telegram"}
+    out["mfa"] = any(v["uid"] == uid and v.get("totp") for v in db.get("creds", {}).values())
     if r == "owner":
         out["admins"] = [{"uid": k, **v, "login": lg.get(k, ""), "online": k in db.get("sess", {})} for k, v in db.get("admins", {}).items()]
         out["requests"] = [{"uid": k, **v} for k, v in db.get("requests", {}).items()]
@@ -787,28 +788,78 @@ async def api_admin(req):
         save()
     return web.json_response({"ok": True})
 
+import struct as _st, hashlib as _hl
+login_fail = {}  # "ip|user" and "ip|" -> (failures, last_failure_time); in memory on purpose, resets on restart
+
+def _https(req): return req.secure or req.headers.get("X-Forwarded-Proto", "") == "https"
+
+def totp_at(secret, t):
+    """RFC 6238 TOTP (SHA-1, 6 digits, 30 s) using only the standard library."""
+    key = base64.b32decode(secret + "=" * (-len(secret) % 8)); h = hmac.new(key, _st.pack(">Q", int(t // 30)), _hl.sha1).digest(); o = h[-1] & 15
+    return "%06d" % ((_st.unpack(">I", h[o:o + 4])[0] & 0x7FFFFFFF) % 1000000)
+
+def totp_ok(secret, code):
+    code = re.sub(r"\D", "", str(code))
+    return len(code) == 6 and any(hmac.compare_digest(totp_at(secret, time.time() + d * 30), code) for d in (-1, 0, 1))
+
+def lock_left(key):
+    """Seconds left on an exponential lockout: starts after 5 failures (30 s, 60 s, 120 s ... capped at 15 min)."""
+    n, ts = login_fail.get(key, (0, 0))
+    return max(0, int(ts + min(900, 30 * 2 ** (n - 5)) - time.time())) if n >= 5 else 0
+
+def note_fail(*keys):
+    for k in keys: login_fail[k] = (login_fail.get(k, (0, 0))[0] + 1, time.time())
+
 async def api_login(req):
+    """Sign-in. Generic errors, per-account and per-IP lockout, constant-time compare, optional TOTP,
+    and the session lives in an HttpOnly + SameSite=Strict (+Secure on HTTPS) cookie, never in browser storage."""
     ip = (req.headers.get("X-Forwarded-For", "") or req.remote or "?").split(",")[0].strip()
-    hits = [t for t in login_hits.get(ip, []) if time.time() - t < 300]
-    if len(hits) >= 8: raise web.HTTPTooManyRequests(text="Too many attempts, wait 5 minutes")
-    login_hits[ip] = hits + [time.time()]
-    b = await req.json()
-    u, p, uid = str(b.get("username", "")).strip().lower(), str(b.get("password", "")), None
-    if len(login_hits) > 5000: login_hits.clear()
-    uh = [t for t in login_hits.get("u:" + u, []) if time.time() - t < 300]
-    if len(uh) >= 10: raise web.HTTPTooManyRequests(text="Too many attempts, wait 5 minutes")
-    login_hits["u:" + u] = uh + [time.time()]
+    try: b = await req.json()
+    except Exception: raise web.HTTPBadRequest(text="Invalid request")
+    u, p, code = str(b.get("username", "")).strip().lower()[:64], str(b.get("password", ""))[:256], str(b.get("code", ""))[:12]
+    ku, ki = ip + "|" + u, ip + "|"
+    if len(login_fail) > 5000: login_fail.clear()
+    wait = max(lock_left(ku), lock_left(ki))
+    if wait: raise web.HTTPTooManyRequests(text=f"Too many attempts. Try again in {wait} seconds.", headers={"Retry-After": str(wait)})
+    uid = rec = None
     if PANEL_USER and PANEL_PASS and OWNERS and hmac.compare_digest(u.encode(), PANEL_USER.encode()) \
             and hmac.compare_digest(p.encode(), PANEL_PASS.encode()):
         uid = min(OWNERS)
     else:
         rec = db.get("creds", {}).get(u)
-        if rec and hmac.compare_digest(hash_pw(p, rec["salt"])[1], rec["hash"]): uid = rec["uid"]
+        if rec:
+            if hmac.compare_digest(hash_pw(p, rec["salt"])[1], rec["hash"]): uid = rec["uid"]
+        else:
+            hash_pw(p)  # spend the same time when the account does not exist, so timing never reveals it
     if uid is None or not is_staff(uid):
-        audit(0, "Failed sign-in for '" + re.sub(r"[^a-z0-9_.\-]", "", u)[:24] + "'")
-        raise web.HTTPUnauthorized(text="Invalid credentials")
+        note_fail(ku, ki); audit(0, "Failed sign-in for '" + re.sub(r"[^a-z0-9_.\-]", "", u)[:24] + "'")
+        raise web.HTTPUnauthorized(text="Invalid username or password")
+    if rec and rec.get("totp"):
+        if not code: raise web.HTTPUnauthorized(text="MFA_REQUIRED")
+        if not totp_ok(rec["totp"], code):
+            note_fail(ku, ki); audit(uid, "Failed two-step code")
+            raise web.HTTPUnauthorized(text="Invalid username or password")
+    login_fail.pop(ku, None); login_fail.pop(ki, None)
     audit(uid, "Signed in (browser)")
-    return web.json_response({"token": make_token(uid)})
+    rem = bool(b.get("remember")); ttl = 30 * 86400 if rem else 12 * 3600  # "remember me": 30-day cookie, otherwise a session cookie
+    resp = web.json_response({"ok": True})
+    resp.set_cookie("vb_s", make_token(uid, ttl), max_age=ttl if rem else None, httponly=True, secure=_https(req), samesite="Strict", path="/")
+    return resp
+
+async def api_mfa(req):
+    """Two-step verification (TOTP) for the signed-in admin's browser login: begin, confirm, disable."""
+    uid, b = await need(req), await req.json()
+    n, rec = next(((n, v) for n, v in db.get("creds", {}).items() if v["uid"] == uid), (None, None))
+    if not rec: raise web.HTTPBadRequest(text="Set a browser login first")
+    act = b.get("action")
+    if act == "begin":
+        rec["totp_pending"] = base64.b32encode(secrets.token_bytes(10)).decode(); save()
+        return web.json_response({"secret": rec["totp_pending"], "uri": f"otpauth://totp/VoiceBot:{n}?secret={rec['totp_pending']}&issuer=VoiceBot"})
+    if act == "confirm" and rec.get("totp_pending") and totp_ok(rec["totp_pending"], b.get("code", "")):
+        rec["totp"] = rec.pop("totp_pending"); save(); audit(uid, "Two-step verification enabled"); return web.json_response({"ok": True})
+    if act == "disable" and rec.get("totp") and totp_ok(rec["totp"], b.get("code", "")):
+        rec.pop("totp", None); save(); audit(uid, "Two-step verification disabled"); return web.json_response({"ok": True})
+    raise web.HTTPBadRequest(text="Invalid code")
 
 async def api_creds(req):
     uid, b = await need(req), await req.json()
@@ -837,7 +888,8 @@ async def api_creds(req):
 async def api_logout(req):
     uid, _ = auth(req)
     if uid is not None: db.get("sess", {}).pop(str(uid), None); audit(uid, "Signed out")
-    return web.json_response({"ok": True})
+    resp = web.json_response({"ok": True}); resp.del_cookie("vb_s", path="/")
+    return resp
 
 async def api_export(req):
     await need(req, owner=True)  # settings only: logins, sessions and the audit log are never exported
@@ -1155,7 +1207,7 @@ async def post_init(app):
     w.add_routes([web.get("/", health), web.get("/health", health), web.get("/app", page), web.get("/api/state", api_state),
                   web.post("/api/save", api_save), web.post("/api/voice", api_voice), web.post("/api/action", api_action),
                   web.post("/api/preview", api_preview), web.post("/api/request", api_request),
-                  web.post("/api/login", api_login), web.post("/api/creds", api_creds), web.post("/api/backup", api_backup), web.post("/api/logout", api_logout), web.get("/api/export", api_export),
+                  web.post("/api/login", api_login), web.post("/api/creds", api_creds), web.post("/api/backup", api_backup), web.post("/api/logout", api_logout), web.post("/api/mfa", api_mfa), web.get("/api/export", api_export),
                   web.post("/api/admin", api_admin), web.get("/api/history", api_history),
                   web.post("/api/hist", api_hist), web.get("/api/histaudio", api_histaudio)])
     runner = web.AppRunner(w); await runner.setup()
