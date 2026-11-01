@@ -185,6 +185,23 @@ html.lite .rp,html.lite .spot{display:none}
 /* nav pin fix: no transform on the fixed bar, so tapping/relayout can never shift it */
 nav{position:fixed;left:10px;right:10px;width:auto;margin:0 auto;transform:none;translate:none;bottom:calc(10px + env(safe-area-inset-bottom));max-width:520px}
 nav button,.sws button{will-change:auto}
+/* ---- v8: pinned layout, true glass, targets ---- */
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{position:fixed;inset:0;display:flex;flex-direction:column;min-height:0;padding:0}
+header{flex:none;position:relative}
+#m{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(140px + env(safe-area-inset-bottom));scrollbar-width:none}#m::-webkit-scrollbar{display:none}
+nav{bottom:auto;top:calc(var(--sh,100vh) - var(--nh,76px) - 10px - env(safe-area-inset-bottom));transform:none;transform-origin:50% 100%;transition:scale .32s cubic-bezier(.34,1.56,.64,1)}
+nav.press{scale:1.04}
+.savebar{bottom:auto;top:calc(var(--sh,100vh) - var(--nh,76px) - 66px - env(safe-area-inset-bottom))}
+nav,.savebar{background:linear-gradient(180deg,rgba(255,255,255,calc(.1*var(--gi,1))),rgba(255,255,255,calc(.02*var(--gi,1)))),rgba(18,20,26,var(--gt,.3));-webkit-backdrop-filter:blur(var(--gb,14px)) saturate(165%);backdrop-filter:blur(var(--gb,14px)) saturate(165%);border:.5px solid rgba(255,255,255,calc(.3*var(--gi,1)));box-shadow:0 16px 36px -10px rgba(0,0,0,.5),0 3px 8px rgba(0,0,0,.2)}
+nav:before{content:"";position:absolute;left:5%;right:5%;top:1px;height:44%;border-radius:34px 34px 60% 60%/30px 30px 18px 18px;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,calc(.36*var(--gi,1))),rgba(255,255,255,calc(.05*var(--gi,1))) 62%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,calc(.65*var(--gi,1)))}
+nav:after{background:none;box-shadow:inset 0 0 18px rgba(255,255,255,calc(.16*var(--gi,1))),inset 0 0 1px rgba(255,255,255,calc(.5*var(--gi,1)))}
+html.no-sr nav:before{display:none}html.no-ig nav:after{display:none}html.no-gb nav,html.no-gb .savebar{border-color:transparent}
+html[data-th=light] nav,html[data-th=light] .savebar{background:linear-gradient(180deg,rgba(255,255,255,calc(.55*var(--gi,1))),rgba(255,255,255,.12)),rgba(246,246,252,calc(var(--gt,.3) + .1));border-color:rgba(255,255,255,.95);box-shadow:0 14px 32px -10px rgba(0,0,0,.28),0 0 0 .5px rgba(0,0,0,.06)}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;color:#fff;margin-right:10px;flex:none;background:linear-gradient(145deg,rgba(var(--acrgb),.95),#5e5ce6)}
+.empty{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:14px 8px 18px;color:var(--mut)}.empty svg{opacity:.65}.empty b{color:var(--tx)}.empty span{font-size:13px;max-width:290px}
+.nf{position:relative;width:92px;flex:none}.nf input{padding-right:34px}.nf i{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-style:normal;font-size:12px;color:var(--mut);pointer-events:none}
+html.nt *,html.nt *:before,html.nt *:after{transition:none!important;animation:none!important}
 </style></head>
 <body>
 <header id="hd" hidden><select id="chat"></select></header><div class="savebar" id="sb" hidden><span id="sv">Unsaved changes</span><button class="btn pri sm" onclick="saveNow()">Save</button></div>
@@ -259,11 +276,12 @@ home(){const c=C(),st=c.stats,mx=Math.max(1,...st.daily.map(d=>d[1])),tp=Object.
  <div class="card s4"><h4>Voice services</h4><div class="chips">${keyTag('cartesia')}${keyTag('elevenlabs')}<span class="tag ok">Edge TTS · Ready</span><span class="tag ${S.backup?'ok':''}">Backup ${S.backup?'On':'Off'}</span></div></div>
  <button class="btn pri" ${cur=='__global__'?'disabled':''} onclick="act('send')">Send now</button><button class="btn" ${cur=='__global__'?'disabled':''} onclick="act('clear')">Clear queue</button>${cur=='__global__'?'<div class="hint s4">Queue actions need a group. Pick one from the menu above.</div>':''}</div>
  <button class="btn s4" style="width:100%" onclick="load()">↻ Refresh</button>`},
-targets(){const c=C();return `<div class="bento"><div class="card s4"><h4>Who gets voice replies</h4>
+targets(){const c=C();return `<div class="bento"><div class="card s4"><div class="gs"><div><b>${c.s.only_listed?'Listed':'Everyone'}</b><span>Replies to</span></div><div><b>${c.s.default_timer}s</b><span>Default wait</span></div><div><b>${Object.keys(c.s.timers).length}</b><span>Listed</span></div><div><b>${c.s.ignore.length}</b><span>Ignored</span></div></div></div>
+ <div class="card s4"><h4>Who gets voice replies</h4>
  ${tog('only_listed','Only reply to listed users')}${sld('default_timer','Wait before sending',1,120,'s')}</div>
- <div class="card s4"><h4>Listed users (wait time)</h4>${Object.entries(c.s.timers).map(([n,t])=>`<div class="item"><b class="t">@${esc(n)}</b><input type="number" min="1" style="width:76px" value="${t}" data-n="${esc(n)}" onchange="setT(this.dataset.n,this.value)"><button class="btn sm red" data-n="${esc(n)}" onclick="delT(this.dataset.n)">✕</button></div>`).join('')||'<div class="mut">No users listed yet</div>'}
- <div class="item"><input type="text" id="nu" class="t" placeholder="@username"><input type="number" id="ns" style="width:76px" value="15" min="1"><button class="btn sm pri" onclick="addT()">＋</button></div></div>
- <div class="card s4"><h4>Ignored users (comma separated)</h4><textarea rows="2" onchange="set('ignore',this.value.split(',').map(x=>x.trim().replace(/^@/,'')).filter(Boolean))">${esc(c.s.ignore.join(', '))}</textarea></div></div>`},
+ <div class="card s4"><h4>Listed users (wait time)</h4>${Object.entries(c.s.timers).map(([n,t])=>`<div class="item"><span class="av">${esc((n[0]||'?').toUpperCase())}</span><b class="t">@${esc(n)}</b><input type="number" min="1" style="width:76px" value="${t}" data-n="${esc(n)}" onchange="setT(this.dataset.n,this.value)"><button class="btn sm red" data-n="${esc(n)}" onclick="delT(this.dataset.n)">✕</button></div>`).join('')||'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M18 8v6M15 11h6"/></svg><b>No listed users</b><span>Add a username below. While "Only reply to listed users" is on, only they get voice replies.</span></div>'}
+ <div class="item"><input type="text" id="nu" class="t" placeholder="@username" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="nf"><input type="number" id="ns" value="15" min="1" inputmode="numeric"><i>sec</i></div><button class="btn sm pri" onclick="addT()">＋</button></div></div>
+ <div class="card s4"><h4>Ignored users (comma separated)</h4><textarea rows="2" onchange="set('ignore',this.value.split(',').map(x=>x.trim().replace(/^@/,'')).filter(Boolean))">${esc(c.s.ignore.join(', '))}</textarea>${c.s.ignore.length?`<div class="chips" style="margin-top:10px">${c.s.ignore.map(n=>`<span class="tag">@${esc(n)}</span>`).join('')}</div><button class="btn sm ghost" style="margin-top:10px" onclick="set('ignore',[],1)">Clear all</button>`:'<div class="hint">Messages from these users are never voiced. Separate names with commas.</div>'}</div></div>`},
 voice(){const c=C(),s=c.s,P={normal:'Normal',deep:'Deep',robot:'Robot',child:'Child',deep_robot:'Deep Robot'},ids=[['cartesia','bn','Cartesia Bangla'],['cartesia','en','Cartesia English'],['elevenlabs','bn','ElevenLabs Bangla'],['elevenlabs','en','ElevenLabs English']];
  return `<div class="bento"><div class="card s4"><h4>Engine</h4>${sel('provider','Provider',S.providers.map(p=>[p,{both:'Auto (Cartesia, then ElevenLabs)',cartesia:'Cartesia',elevenlabs:'ElevenLabs',edge:'Edge TTS'}[p]]))}
  ${sel('lang','Language',[['auto','Auto detect'],['bn','Bangla'],['en','English']])}</div>
@@ -285,7 +303,7 @@ more(){const c=C(),own=S.role=='owner';return `<div class="bento">${c?`<div clas
  ${own?`<div class="card s4"><h4>Telegram backup</h4><div class="row" style="padding:0"><span>Send settings backup to Telegram</span><label class="sw"><input type="checkbox" ${S.backup?'checked':''} ${S.backup_avail?'':'disabled'} onchange="setBackup(this.checked)"><i></i></label></div><div class="hint">${S.backup_avail?'Off stops new backup files. Your data is then kept only on the host disk, which some hosts wipe on redeploy.':'Unavailable: BACKUP_CHAT_ID is set to off, or no owner ID is configured.'}</div></div>`:''}
  <div class="card s4"><h4>Appearance</h4><div class="seg">${[['dark','Dark'],['light','Light'],['system','System Auto']].map(([v,t])=>`<button class="${PREF.th==v?'on':''}" onclick="setPref('th','${v}',event)">${t}</button>`).join('')}</div>
  <label class="l">Accent color</label><div class="sws">${ACC.map(([n,c])=>`<button style="background:rgb(${c});color:rgb(${c})" class="${PREF.ac==c?'on':''}" aria-label="${n}" onclick="setPref('ac','${c}')"></button>`).join('')}</div>
- <h4 style="margin-top:14px">Liquid glass</h4>${gs('gb','Background blur',0,40,'px')}${gs('gt','Transparency',10,90,'%')}${gs('gi','Glass intensity',0,100,'%')}<button class="btn sm ghost" style="margin:12px 0" onclick="resetGlass()">Reset glass</button>
+ <h4 style="margin-top:14px">Liquid glass</h4>${gs('gb','Background blur',0,40,'px')}${gs('gt','Transparency',10,90,'%')}${gs('gi','Glass intensity',0,100,'%')}<div class="row"><span>Specular reflection</span><label class="sw"><input type="checkbox" ${PREF.sr?'checked':''} onchange="setPref('sr',this.checked)"><i></i></label></div><div class="row"><span>Inner glow</span><label class="sw"><input type="checkbox" ${PREF.ig?'checked':''} onchange="setPref('ig',this.checked)"><i></i></label></div><div class="row"><span>Glass border</span><label class="sw"><input type="checkbox" ${PREF.gbd?'checked':''} onchange="setPref('gbd',this.checked)"><i></i></label></div><button class="btn sm ghost" style="margin:12px 0" onclick="resetGlass()">Reset glass</button>
  <div class="row"><span>Reduce effects (saves battery)</span><label class="sw"><input type="checkbox" ${PREF.fx?'checked':''} onchange="setPref('fx',this.checked)"><i></i></label></div><div class="hint">Turns off blur and animations on slower phones. Saved on this device only.</div></div>
  ${own?`<div class="card s4"><div class="act" style="align-items:center"><h4>Security log</h4><button class="btn sm ghost" onclick="exportS()">Export settings</button></div><div class="tl">${(S.audit||[]).map(a=>`<div class="${/Failed/.test(a.w)?'bad':''}">${esc(a.w)}<small>${a.u?esc(nameOf(a.u)):'Unknown'} · ${new Date(a.t*1000).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</small></div>`).join('')||'<div class="mut">No events yet</div>'}</div></div>`:''}
  <div class="card s4"><h4>Browser login</h4><div class="me"><b>${esc(S.me?.name||'')}</b>${S.me?.login?'<span class="mut">@'+esc(S.me.login)+'</span>':''}<span class="tag ok">${S.me?.via=='browser'?'Browser session':'Telegram'}</span></div><div class="row" style="padding:0"><span>Enable browser login</span><label class="sw"><input type="checkbox" ${S.login?'checked':''} onchange="loginToggle(this)"><i></i></label></div>
@@ -334,19 +352,16 @@ load();
 /* ---- v4 helpers ---- */
 const ACC=[['Blue','10,132,255'],['Purple','191,90,242'],['Pink','255,55,95'],['Orange','255,159,10'],['Green','48,209,88'],['Teal','100,210,255']];
 const nameOf=u=>(S.admins||[]).find(a=>a.uid==u)?.name||(u==S.uid?'You':'Owner');
-const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('vb_pref')||'{}')}catch(e){}return{th:p.th||'dark',ac:p.ac||'10,132,255',fx:!!p.fx,gb:p.gb??20,gt:p.gt??42,gi:p.gi??100}})();
+const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('vb_pref')||'{}')}catch(e){}return{th:p.th||'dark',ac:p.ac||'10,132,255',fx:!!p.fx,gb:p.v==2?p.gb:14,gt:p.v==2?p.gt:30,gi:p.v==2?p.gi:100,sr:p.sr!==false,ig:p.ig!==false,gbd:p.gbd!==false,v:2}})();
 const mq=window.matchMedia?matchMedia('(prefers-color-scheme: light)'):null;
 function applyPref(){const h=document.documentElement,l=PREF.th=='light'||(PREF.th=='system'&&mq&&mq.matches);h.dataset.th=l?'light':'dark';
-  h.style.setProperty('--ac','rgb('+PREF.ac+')');h.style.setProperty('--acrgb',PREF.ac);h.classList.toggle('lite',PREF.fx);h.style.setProperty('--gb',PREF.gb+'px');h.style.setProperty('--gt',PREF.gt/100);h.style.setProperty('--gi',PREF.gi/100);
+  h.style.setProperty('--ac','rgb('+PREF.ac+')');h.style.setProperty('--acrgb',PREF.ac);h.classList.toggle('lite',PREF.fx);h.style.setProperty('--gb',PREF.gb+'px');h.style.setProperty('--gt',PREF.gt/100);h.style.setProperty('--gi',PREF.gi/100);h.classList.toggle('no-sr',!PREF.sr);h.classList.toggle('no-ig',!PREF.ig);h.classList.toggle('no-gb',!PREF.gbd);
   const t=document.querySelector('meta[name=theme-color]');if(t)t.content=l?'#f2f2f7':'#000000';try{tg.setHeaderColor&&tg.setHeaderColor(l?'#f2f2f7':'#000000');tg.setBackgroundColor&&tg.setBackgroundColor(l?'#f2f2f7':'#000000')}catch(e){}}
 function persist(){try{localStorage.setItem('vb_pref',JSON.stringify(PREF))}catch(e){}}
 const RM=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
-function setPref(k,v,ev){PREF[k]=v;persist();const h=document.documentElement;
-  if(k=='th'&&h.startViewTransition&&!PREF.fx&&!RM()){const x=ev&&ev.clientX!=null?ev.clientX:innerWidth/2,y=ev&&ev.clientY!=null?ev.clientY:innerHeight/2,r=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
-    h.startViewTransition(()=>{applyPref();render()}).ready.then(()=>h.animate({clipPath:[`circle(0px at ${x}px ${y}px)`,`circle(${r}px at ${x}px ${y}px)`]},{duration:560,easing:'cubic-bezier(.2,.8,.2,1)',pseudoElement:'::view-transition-new(root)'})).catch(()=>{})}
-  else{if(!PREF.fx&&!RM()){h.classList.add('tt');setTimeout(()=>h.classList.remove('tt'),450)}applyPref();render()}}
-let gtm;function setGlass(k,v){PREF[k]=+v;const e=$('#g_'+k);if(e)e.textContent=v+(k=='gb'?'px':'%');applyPref();clearTimeout(gtm);gtm=setTimeout(persist,250)}
-function resetGlass(){Object.assign(PREF,{gb:20,gt:42,gi:100});persist();applyPref();render();toast('Glass reset')}
+function setPref(k,v){const h=document.documentElement;PREF[k]=v;persist();if(k=='th'){h.classList.add('nt');applyPref();render();requestAnimationFrame(()=>requestAnimationFrame(()=>h.classList.remove('nt')))}else{applyPref();render()}}
+let gtm,gq=0,gv={};function setGlass(k,v){PREF[k]=+v;gv[k]=v;if(!gq)gq=requestAnimationFrame(()=>{gq=0;const h=document.documentElement.style;h.setProperty('--gb',PREF.gb+'px');h.setProperty('--gt',PREF.gt/100);h.setProperty('--gi',PREF.gi/100);for(const q in gv){const e=$('#g_'+q);if(e)e.textContent=gv[q]+(q=='gb'?'px':'%')}gv={}});clearTimeout(gtm);gtm=setTimeout(persist,300)}
+function resetGlass(){Object.assign(PREF,{gb:14,gt:30,gi:100,sr:true,ig:true,gbd:true});persist();applyPref();render();toast('Glass reset')}
 function resetTune(){const s=C().s;['rate','pitch','volume'].forEach(k=>{if(s[k]!==0){s[k]=0;mark(k)}});render();toast('Tuning reset')}
 function gs(k,l,a,b,u){return `<div class="act" style="margin-top:12px;align-items:center"><span>${l}</span><span class="val" id="g_${k}">${PREF[k]}${u}</span></div><input type="range" min="${a}" max="${b}" value="${PREF[k]}" style="--p:${(PREF[k]-a)/(b-a)*100}%" oninput="sp(this);setGlass('${k}',this.value)">`}
 function vClose(){const s=$('#sh');if(s.hidden||s.classList.contains('out'))return;const h=s.innerHTML;if(RM()||PREF.fx){s.hidden=true;return}s.classList.add('out');setTimeout(()=>{s.classList.remove('out');if(s.innerHTML===h)s.hidden=true},180)}
@@ -389,7 +404,7 @@ document.addEventListener('pointerdown',e=>{const t=e.target.closest('.btn,.seg 
 let lastSel=0;document.addEventListener('input',e=>{if(e.target.type=='range'&&Date.now()-lastSel>60){lastSel=Date.now();hap('sel')}},{passive:true});
 const TI=['home','targets','voice','hist','more'];let NEWTAB=0,PT=tab;
 const _render=render;render=function(){_render();if(NEWTAB){NEWTAB=0;stagger()}countUps()};
-const _goTab=goTab;goTab=function(k){if(k==tab)return;document.documentElement.style.setProperty('--dir',TI.indexOf(k)>TI.indexOf(tab)?1:-1);NEWTAB=1;if(scrollY>0)scrollTo(0,0);_goTab(k)};
+const _goTab=goTab;goTab=function(k){if(k==tab)return;document.documentElement.style.setProperty('--dir',TI.indexOf(k)>TI.indexOf(tab)?1:-1);NEWTAB=1;$('#m').scrollTop=0;_goTab(k)};
 function stagger(){if(PREF.fx||RM())return;const m=$('#m');m.classList.remove('stg');[...m.querySelectorAll(':scope>.card,:scope>.bento>.card')].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,9)));void m.offsetWidth;m.classList.add('stg');setTimeout(()=>m.classList.remove('stg'),900)}
 function countUps(){if(LR||PREF.fx||RM()||tab!='home')return;document.querySelectorAll('#m .big,#m .gs b').forEach(el=>{const t=el.textContent.trim(),k=/k$/.test(t),n=parseFloat(t);if(!isFinite(n)||!/^\d+(\.\d+)?k?$/.test(t))return;
   const dec=k?1:(t.includes('.')?1:0),t0=performance.now();(function f(now){const p=Math.min(1,(now-t0)/700),v=n*(1-Math.pow(1-p,3));el.textContent=v.toFixed(dec)+(k?'k':'');if(p<1)requestAnimationFrame(f);else el.textContent=t})(t0)})}
@@ -398,4 +413,9 @@ function countUps(){if(LR||PREF.fx||RM()||tab!='home')return;document.querySelec
 function onl(){$('#off').classList.toggle('on',!navigator.onLine)}addEventListener('online',onl);addEventListener('offline',onl);onl();
 async function exportS(){try{const d=await api('/api/export'),j=JSON.stringify(d,null,2);try{await navigator.clipboard.writeText(j)}catch(e){}
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([j],{type:'application/json'}));a.download='voicebot-settings.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Exported ✓ (also copied)')}catch(e){toast('Export failed',1)}}
+
+/* ---- v8: pinned viewport (keyboard never moves the bar) ---- */
+let SH=0,SW=0;function vp(){const w=innerWidth,h=innerHeight;if(w!=SW){SW=w;SH=h}else if(h>SH)SH=h;const r=document.documentElement;r.style.setProperty('--sh',SH+'px');r.classList.toggle('kb',h<SH-110)}
+vp();addEventListener('resize',vp);try{tg.onEvent('viewportChanged',vp);tg.disableVerticalSwipes&&tg.disableVerticalSwipes()}catch(e){}
+if(window.ResizeObserver)new ResizeObserver(()=>{const h=$('#nv').offsetHeight;if(h)document.documentElement.style.setProperty('--nh',h+'px')}).observe($('#nv'));
 </script></body></html>
