@@ -228,6 +228,21 @@ body.lg:before{inset:-12%;background:radial-gradient(60% 45% at 20% 25%,rgba(94,
 html[data-th=light] .login{background:linear-gradient(160deg,rgba(255,255,255,.92),rgba(255,255,255,.66))}
 .login>*{animation-duration:.45s}.login input{transition:box-shadow .2s,border-color .2s}
 .foot{margin-top:16px;text-align:center;font-size:12px;color:var(--mut)}.foot b{color:var(--tx);font-weight:600}
+/* ---- v11: blue-pill nav, badges, vivid animated login bg ---- */
+nav button{color:rgba(255,255,255,.92);transition:color .25s}nav button.on{color:var(--ac)}
+nav button em{font-size:11px;font-weight:600;letter-spacing:0}nav button svg{width:25px;height:25px}
+html[data-th=light] nav button{color:#1c1c1e}html[data-th=light] nav button.on{color:var(--ac)}
+nav .pill{background:linear-gradient(180deg,rgba(var(--acrgb),.38),rgba(var(--acrgb),.16));box-shadow:inset 0 1px 0 rgba(255,255,255,calc(.4*var(--gi,1))),inset 0 0 0 .5px rgba(var(--acrgb),.55),0 6px 18px rgba(var(--acrgb),.3)}
+nav .pill:after{opacity:.35}
+.bdg{position:absolute;top:3px;left:calc(50% + 7px);min-width:17px;height:17px;padding:0 5px;border-radius:9px;background:linear-gradient(180deg,#ff5a52,#ff3b30);color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center;font-style:normal;box-shadow:0 0 0 2px rgba(18,20,26,.85),0 2px 6px rgba(255,59,48,.45);pointer-events:none;z-index:2}
+.bdg.pop{animation:bpop .45s cubic-bezier(.34,1.56,.64,1)}@keyframes bpop{from{transform:scale(0)}}
+html[data-th=light] .bdg{box-shadow:0 0 0 2px rgba(255,255,255,.92),0 2px 6px rgba(255,59,48,.4)}
+@media(max-width:360px){nav button em{font-size:10px}}
+body.lg:before{inset:-25%;background:radial-gradient(45% 40% at 22% 28%,#6a5cff,transparent 70%),radial-gradient(40% 38% at 80% 22%,#ff3d7f,transparent 70%),radial-gradient(45% 42% at 72% 80%,#1f8fff,transparent 70%),radial-gradient(38% 36% at 18% 82%,#ff9f1c,transparent 70%);opacity:.9;animation:drift 12s ease-in-out infinite alternate}
+@keyframes drift{0%{transform:translate3d(-4%,2%,0) rotate(0) scale(1)}100%{transform:translate3d(5%,-4%,0) rotate(14deg) scale(1.15)}}
+body.lg:after,html[data-th=light] body.lg:after{inset:-25%;background:radial-gradient(35% 32% at 60% 40%,rgba(48,208,200,.55),transparent 70%),radial-gradient(35% 32% at 30% 65%,rgba(191,90,242,.5),transparent 70%);animation:drift 16s ease-in-out infinite alternate-reverse;will-change:transform}
+html[data-th=light] body.lg:before{opacity:.6}html[data-th=light] body.lg:after{opacity:.55}
+html.lite body.lg:after{animation:none}@media(prefers-reduced-motion:reduce){body.lg:after{animation:none}}
 </style></head>
 <body>
 <header id="hd" hidden><select id="chat"></select></header><div class="savebar" id="sb" hidden><span id="sv">Unsaved changes</span><button class="btn pri sm" onclick="saveNow()">Save</button></div>
@@ -264,7 +279,6 @@ function loginView(pending){document.body.classList.add('lg');$('#hd').hidden=$(
   <div id="le" class="lerr" role="alert" aria-live="polite"></div>
   <div class="row" style="padding:0 0 10px"><span>Remember me</span><label class="sw"><input type="checkbox" id="lr" checked><i></i></label></div>
   <button class="btn pri" id="lb" onclick="doLogin()">Log in</button>
-  <div class="lk"><button type="button" onclick="toast('Ask the owner to reset your login.')">Forgot password?</button><button type="button" onclick="toast('Open the bot in Telegram and send /start to request access.')">Create an account</button></div>
   <div class="mut hint">Only approved admins can sign in. Ask the owner if you need access.</div></div><div class="foot">Panel by <b>@${OWNER_TAG}</b></div></div>`}
 function LE(t){const e=$('#le');if(!e)return;e.textContent=t;e.classList.remove('sh');void e.offsetWidth;e.classList.add('sh')}
 function pwShow(b){const i=$('#lp'),s=i.type=='password';i.type=s?'text':'password';b.textContent=s?'Hide':'Show'}
@@ -406,7 +420,7 @@ function sbar(on){$('#sb').hidden=!on}
 let px=null,LR=0;
 function navSync(){const n=$('#nv');if(!n.dataset.b){n.innerHTML='<i class="pill"></i><i class="spot"></i>'+TABS.map(([k,i,l])=>`<button data-k="${k}" onclick="goTab('${k}')"><span>${i}</span><em>${l}</em></button>`).join('');n.dataset.b=1;
   n.addEventListener('pointerdown',e=>{if(e.target.closest('button'))n.classList.add('press')});['pointerup','pointercancel','pointerleave'].forEach(t=>n.addEventListener(t,()=>n.classList.remove('press')))}
-  n.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k==tab));movePill()}
+  n.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k==tab));navBadges();movePill()}
 function goTab(k){if(k==tab)return;tab=k;render()}
 function movePill(){const n=$('#nv'),p=n.querySelector('.pill'),b=n.querySelector('button.on');if(!p||!b||n.hidden||!b.offsetWidth)return;
   const x=b.offsetLeft,w=b.offsetWidth;p.style.width=w+'px';p.style.height=b.offsetHeight+'px';p.style.top=b.offsetTop+'px';p.style.transform=`translateX(${x}px)`;
@@ -472,4 +486,10 @@ function lgBuild(){const r=document.documentElement,n=$('#nv'),w=Math.round(n.of
 const OWNER_TAG='sakibXXL';
 const scopeBar=()=>`<div class="scope" onclick="goTab('more')"><i>◎</i>Editing <b>${esc((S.chats||[]).find(c=>c.id==cur)?.title||'Global defaults')}</b><span>Change</span></div>`;
 async function pickChat(id){await saveNow();cur=id;render();toast('Editing '+((S.chats||[]).find(c=>c.id==id)?.title||'group'))}
+
+/* ---- v11: nav badges (provider alerts on Home, pending access requests on More) ---- */
+function navBadges(){try{const c={home:['cartesia','elevenlabs'].filter(bad).length,more:(S.requests||[]).length};
+  document.querySelectorAll('#nv button').forEach(b=>{const n=c[b.dataset.k]||0;let e=b.querySelector('.bdg');if(!n){if(e)e.remove();b.removeAttribute('aria-label');return}
+    const t=n>9?'9+':String(n);if(!e){e=document.createElement('b');e.className='bdg';b.appendChild(e)}
+    if(e.textContent!=t){e.textContent=t;e.classList.remove('pop');void e.offsetWidth;e.classList.add('pop')}b.setAttribute('aria-label',b.dataset.k+', '+n+' new')})}catch(e){}}
 </script></body></html>
