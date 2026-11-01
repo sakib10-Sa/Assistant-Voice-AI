@@ -243,6 +243,47 @@ body.lg:before{inset:-25%;background:radial-gradient(45% 40% at 22% 28%,#6a5cff,
 body.lg:after,html[data-th=light] body.lg:after{inset:-25%;background:radial-gradient(35% 32% at 60% 40%,rgba(48,208,200,.55),transparent 70%),radial-gradient(35% 32% at 30% 65%,rgba(191,90,242,.5),transparent 70%);animation:drift 16s ease-in-out infinite alternate-reverse;will-change:transform}
 html[data-th=light] body.lg:before{opacity:.6}html[data-th=light] body.lg:after{opacity:.55}
 html.lite body.lg:after{animation:none}@media(prefers-reduced-motion:reduce){body.lg:after{animation:none}}
+/* ---- v12: nav rebuilt for 120Hz: static glass layer, animated inner layer ---- */
+nav{display:block;padding:8px;max-width:460px;border-radius:34px;background:none!important;border:0;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;overflow:visible;contain:layout style;transition:none}
+nav.press{scale:none}nav:before,nav:after{display:none!important}
+nav .gl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,calc(.07*var(--gi,1))),rgba(255,255,255,0) 60%),rgba(255,255,255,var(--gt,.12));-webkit-backdrop-filter:blur(var(--gb,8px)) saturate(150%);backdrop-filter:blur(var(--gb,8px)) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,calc(.55*var(--gi,1))),inset 0 0 0 .5px rgba(255,255,255,calc(.28*var(--gi,1))),inset 0 0 20px rgba(255,255,255,calc(.1*var(--gi,1))),0 14px 30px -10px rgba(0,0,0,.5)}
+nav .gl:before{content:"";position:absolute;inset:0;background:radial-gradient(75% 55% at 50% -12%,rgba(255,255,255,calc(.42*var(--gi,1))),transparent 70%)}
+html.no-sr nav .gl:before{display:none}
+html.no-ig nav .gl{box-shadow:inset 0 1px 0 rgba(255,255,255,calc(.55*var(--gi,1))),inset 0 0 0 .5px rgba(255,255,255,calc(.28*var(--gi,1))),0 14px 30px -10px rgba(0,0,0,.5)}
+html.no-gb nav .gl{box-shadow:inset 0 0 20px rgba(255,255,255,calc(.1*var(--gi,1))),0 14px 30px -10px rgba(0,0,0,.5)}
+html.no-ig.no-gb nav .gl{box-shadow:0 14px 30px -10px rgba(0,0,0,.5)}
+html.rf nav .gl{-webkit-backdrop-filter:url(#lgf) blur(var(--gb,8px)) saturate(150%);backdrop-filter:url(#lgf) blur(var(--gb,8px)) saturate(150%)}
+html[data-th=light] nav .gl{background:linear-gradient(180deg,rgba(255,255,255,calc(.5*var(--gi,1))),rgba(255,255,255,0) 60%),rgba(255,255,255,calc(var(--gt,.12) + .2));box-shadow:inset 0 0 20px rgba(255,255,255,.55),0 12px 28px -10px rgba(0,0,0,.25)}
+nav .in{position:relative;display:flex;gap:2px;transition:scale .3s cubic-bezier(.34,1.56,.64,1);will-change:transform}
+nav.press .in{scale:1.035}
+nav .pill{will-change:transform;background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.1));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 .5px rgba(255,255,255,.24),0 4px 12px rgba(0,0,0,.2)}
+html[data-th=light] nav .pill{background:rgba(0,0,0,.07);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.06)}
+html[data-ns=blue] nav .pill{background:linear-gradient(180deg,rgba(var(--acrgb),.38),rgba(var(--acrgb),.16));box-shadow:inset 0 1px 0 rgba(255,255,255,calc(.4*var(--gi,1))),inset 0 0 0 .5px rgba(var(--acrgb),.55),0 6px 18px rgba(var(--acrgb),.3)}
+.spot{display:none}.seg.two{grid-template-columns:repeat(2,1fr)}
+html.lite nav .gl{-webkit-backdrop-filter:none;backdrop-filter:none;background:#161618;box-shadow:0 10px 24px -10px rgba(0,0,0,.5)}html.lite[data-th=light] nav .gl{background:#f2f2f7}
+/* ---- v13: compact login, eye icon, classic bar, 3D motion, backgrounds ---- */
+.lwrap{margin-top:3vh}.login{padding:20px 18px 16px;border-radius:26px}.login .lock{width:50px;height:50px;border-radius:16px;margin:0 auto 8px}.login .lock svg{width:25px;height:25px}
+.login .big{font-size:20px}.login .l{margin:8px 0 4px;font-size:12px}.login input{min-height:42px;padding:8px 12px}.lerr{min-height:16px;margin:4px 0}
+.login .row{min-height:36px;padding:0 0 6px!important}.login .btn{min-height:44px}.login .hint,.login .note{font-size:11.5px;margin-top:10px}.foot{margin-top:10px}
+.pw button{display:grid;place-items:center;width:40px;padding:0;right:2px}.pw button svg{display:block}.pw button .e2{display:none}.pw button.on .e1{display:none}.pw button.on .e2{display:block}
+html[data-nl=classic] nav{left:0;right:0;max-width:none;width:100%;margin:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom));border-radius:0;top:calc(var(--sh,100vh) - var(--nh,64px))}
+html[data-nl=classic] nav .gl{border-radius:0;background:var(--card);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:inset 0 .5px 0 var(--hair),0 -8px 24px -12px rgba(0,0,0,.35)}
+html[data-nl=classic] nav .gl:before{display:none}html[data-nl=classic] nav .pill{border-radius:14px}html[data-nl=classic] .savebar{top:calc(var(--sh,100vh) - var(--nh,64px) - 58px)}
+html[data-bg=plain] body:before{display:none}
+html[data-bg=aurora] body:not(.lg):before{content:"";position:fixed;inset:-25%;z-index:-1;pointer-events:none;opacity:.42;background:radial-gradient(45% 40% at 22% 28%,#6a5cff,transparent 70%),radial-gradient(40% 38% at 80% 22%,#ff3d7f,transparent 70%),radial-gradient(45% 42% at 72% 80%,#1f8fff,transparent 70%),radial-gradient(38% 36% at 18% 82%,#30d0c8,transparent 70%);animation:drift 24s ease-in-out infinite alternate;will-change:transform}
+html.lite[data-bg=aurora] body:before,html.no3d[data-bg=aurora] body:before{animation:none}
+#m{perspective:1400px;zoom:var(--ts,1)}
+html:not(.no3d) #m.stg{animation:sl3 .5s var(--ease) both}
+html:not(.no3d) #m.stg>.card,html:not(.no3d) #m.stg>.bento>.card,html:not(.no3d) #m.stg>.bento>div{animation:rise3 .6s var(--ease) both;animation-delay:calc(var(--i,0)*50ms);transform-origin:50% 0}
+@keyframes sl3{from{opacity:.2;transform:translateX(calc(var(--dir,1)*30px)) rotateY(calc(var(--dir,1)*-12deg))}}
+@keyframes rise3{from{opacity:0;transform:translateY(22px) rotateX(-14deg) scale(.97)}}
+.card{transition:transform .5s cubic-bezier(.34,1.56,.64,1),background .25s,border-color .25s}.card.tilt{transition:transform .09s linear}
+nav .in{perspective:500px}
+.lwrap{perspective:900px}.login{transform-style:preserve-3d;will-change:transform;transition:transform .6s cubic-bezier(.34,1.56,.64,1)}
+.login .lock{transform:translateZ(34px)}.login .big{transform:translateZ(20px)}.login .btn{transform:translateZ(12px)}
+html.no3d .login,html.no3d .login *{transform:none!important}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;margin-bottom:10px}.kv span{color:var(--mut)}.kv b{font-weight:600;text-align:right}
+.srch{width:100%;margin:0 0 12px;padding-left:38px;background:var(--fill) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='8' cy='8' r='5.5'/%3E%3Cpath d='M12.5 12.5L16 16'/%3E%3C/svg%3E") no-repeat 12px 50%}
 </style></head>
 <body>
 <header id="hd" hidden><select id="chat"></select></header><div class="savebar" id="sb" hidden><span id="sv">Unsaved changes</span><button class="btn pri sm" onclick="saveNow()">Save</button></div>
@@ -274,14 +315,14 @@ function loginView(pending){document.body.classList.add('lg');$('#hd').hidden=$(
   $('#m').innerHTML=`<div class="lwrap"><i class="orb o1"></i><i class="orb o2"></i><div class="card login"><div class="lock"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.5" r="1.2" fill="currentColor"/></svg></div><div class="big">Secure Login</div><div class="mut">Admin Control Panel</div>
   ${pending?'<div class="note">Your access is waiting for owner approval.</div>':''}
   <label class="l" for="lu">Username</label><input type="text" id="lu" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="64" value="${esc(ls('vb_u')||'')}">
-  <label class="l" for="lp">Password</label><div class="pw"><input type="password" id="lp" autocomplete="current-password" maxlength="256" onkeydown="if(event.key=='Enter')doLogin()"><button type="button" onclick="pwShow(this)" aria-label="Show password">Show</button></div>
+  <label class="l" for="lp">Password</label><div class="pw"><input type="password" id="lp" autocomplete="current-password" maxlength="256" onkeydown="if(event.key=='Enter')doLogin()"><button type="button" onclick="pwShow(this)" aria-label="Show password"><svg class="e1" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="e2" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.5 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.2-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div>
   <div id="lcw" hidden><label class="l" for="lc">Authenticator code</label><input type="text" id="lc" inputmode="numeric" autocomplete="one-time-code" maxlength="8" onkeydown="if(event.key=='Enter')doLogin()"></div>
   <div id="le" class="lerr" role="alert" aria-live="polite"></div>
   <div class="row" style="padding:0 0 10px"><span>Remember me</span><label class="sw"><input type="checkbox" id="lr" checked><i></i></label></div>
   <button class="btn pri" id="lb" onclick="doLogin()">Log in</button>
   <div class="mut hint">Only approved admins can sign in. Ask the owner if you need access.</div></div><div class="foot">Panel by <b>@${OWNER_TAG}</b></div></div>`}
 function LE(t){const e=$('#le');if(!e)return;e.textContent=t;e.classList.remove('sh');void e.offsetWidth;e.classList.add('sh')}
-function pwShow(b){const i=$('#lp'),s=i.type=='password';i.type=s?'text':'password';b.textContent=s?'Hide':'Show'}
+function pwShow(b){const i=$('#lp'),s=i.type=='password';i.type=s?'text':'password';b.classList.toggle('on',s);b.setAttribute('aria-label',s?'Hide password':'Show password')}
 async function doLogin(){const b=$('#lb');if(b.disabled)return;b.disabled=true;b.classList.add('ld');LE('');
   try{await api('/api/login',{username:$('#lu').value,password:$('#lp').value,code:($('#lc')||{}).value||'',remember:$('#lr').checked});ls('vb_u',$('#lr').checked?$('#lu').value.trim().toLowerCase():null);$('#lp').value='';load()}
   catch(e){b.disabled=false;b.classList.remove('ld');
@@ -352,7 +393,13 @@ more(){const c=C(),own=S.role=='owner';return `<div class="bento">${c?`<div clas
  <div class="card s4"><h4>Groups</h4><div class="hint" style="margin:-4px 0 8px">Groups where the bot is added. Pick the one you want to edit.</div>${(S.chats||[]).map(c=>`<div class="item"><div class="t"><b>${esc(c.title||c.id)}</b><div class="mut">${c.id=='__global__'?'Applies to all groups':'ID '+esc(c.id)}</div></div><button class="btn sm use ${c.id==cur?'on':''}" onclick="pickChat('${c.id}')">${c.id==cur?'Editing':'Edit'}</button></div>`).join('')||'<div class="empty"><b>No groups yet</b><span>Add the bot to a group and send one message there.</span></div>'}</div>
  <div class="card s4"><h4>Appearance</h4><div class="seg">${[['dark','Dark'],['light','Light'],['system','System Auto']].map(([v,t])=>`<button class="${PREF.th==v?'on':''}" onclick="setPref('th','${v}',event)">${t}</button>`).join('')}</div>
  <label class="l">Accent color</label><div class="sws">${ACC.map(([n,c])=>`<button style="background:rgb(${c});color:rgb(${c})" class="${PREF.ac==c?'on':''}" aria-label="${n}" onclick="setPref('ac','${c}')"></button>`).join('')}</div>
- <h4 style="margin-top:14px">Liquid glass</h4>${gs('gb','Background blur',0,40,'px')}${gs('gt','Transparency',0,90,'%')}${gs('gi','Glass intensity',0,100,'%')}<div class="row"><span>Specular reflection</span><label class="sw"><input type="checkbox" ${PREF.sr?'checked':''} onchange="setPref('sr',this.checked)"><i></i></label></div><div class="row"><span>Inner glow</span><label class="sw"><input type="checkbox" ${PREF.ig?'checked':''} onchange="setPref('ig',this.checked)"><i></i></label></div><div class="row"><span>Glass border</span><label class="sw"><input type="checkbox" ${PREF.gbd?'checked':''} onchange="setPref('gbd',this.checked)"><i></i></label></div>${RFOK?`<div class="row"><span>Edge refraction (lens)</span><label class="sw"><input type="checkbox" ${PREF.rf?'checked':''} onchange="setPref('rf',this.checked);lgBuild()"><i></i></label></div>`:''}<button class="btn sm ghost" style="margin:12px 0" onclick="resetGlass()">Reset glass</button>
+ <div class="act" style="align-items:center"><span class="mut">Look &amp; feel</span><button class="btn sm ghost" onclick="resetLook()">Reset appearance</button></div>
+ <label class="l">Bar layout</label><div class="seg two">${[['float','Floating glass'],['classic','Classic bar']].map(([v,t])=>`<button class="${PREF.nl==v?'on':''}" onclick="setPref('nl','${v}')">${t}</button>`).join('')}</div>
+ <label class="l">Background</label><div class="seg">${[['default','Default'],['aurora','Aurora'],['plain','Plain']].map(([v,t])=>`<button class="${PREF.bg==v?'on':''}" onclick="setPref('bg','${v}')">${t}</button>`).join('')}</div>
+ <label class="l">Text size <span class="val" id="g_ts">${PREF.ts}%</span></label><input type="range" min="90" max="120" step="5" value="${PREF.ts}" style="--p:${(PREF.ts-90)/30*100}%" oninput="sp(this);$('#g_ts').textContent=this.value+'%'" onchange="setPref('ts',+this.value)">
+ <div class="row"><span>3D motion</span><label class="sw"><input type="checkbox" ${PREF.m3d?'checked':''} onchange="setPref('m3d',this.checked)"><i></i></label></div><div class="row"><span>Haptic feedback</span><label class="sw"><input type="checkbox" ${PREF.hp?'checked':''} onchange="setPref('hp',this.checked)"><i></i></label></div>
+ <label class="l">Navigation style</label><div class="seg two">${[['bubble','Frosted bubble'],['blue','Blue pill']].map(([v,t])=>`<button class="${PREF.ns==v?'on':''}" onclick="setPref('ns','${v}')">${t}</button>`).join('')}</div>
+ <h4 style="margin-top:14px">Liquid glass</h4>${gs('gb','Background blur',0,40,'px')}${gs('gt','Transparency',0,90,'%')}${gs('gi','Glass intensity',0,100,'%')}<div class="row"><span>Specular reflection</span><label class="sw"><input type="checkbox" ${PREF.sr?'checked':''} onchange="setPref('sr',this.checked)"><i></i></label></div><div class="row"><span>Inner glow</span><label class="sw"><input type="checkbox" ${PREF.ig?'checked':''} onchange="setPref('ig',this.checked)"><i></i></label></div><div class="row"><span>Glass border</span><label class="sw"><input type="checkbox" ${PREF.gbd?'checked':''} onchange="setPref('gbd',this.checked)"><i></i></label></div>${RFOK?`<div class="row"><span>Edge refraction (lens, heavy)</span><label class="sw"><input type="checkbox" ${PREF.rf?'checked':''} onchange="setPref('rf',this.checked);lgBuild()"><i></i></label></div>`:''}<button class="btn sm ghost" style="margin:12px 0" onclick="resetGlass()">Reset glass</button>
  <div class="row"><span>Reduce effects (saves battery)</span><label class="sw"><input type="checkbox" ${PREF.fx?'checked':''} onchange="setPref('fx',this.checked)"><i></i></label></div><div class="hint">Turns off blur and animations on slower phones. Saved on this device only.</div></div>
  ${own?`<div class="card s4"><div class="act" style="align-items:center"><h4>Security log</h4><button class="btn sm ghost" onclick="exportS()">Export settings</button></div><div class="tl">${(S.audit||[]).map(a=>`<div class="${/Failed/.test(a.w)?'bad':''}">${esc(a.w)}<small>${a.u?esc(nameOf(a.u)):'Unknown'} · ${new Date(a.t*1000).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</small></div>`).join('')||'<div class="mut">No events yet</div>'}</div></div>`:''}
  <div class="card s4"><h4>Browser login</h4><div class="me"><b>${esc(S.me?.name||'')}</b>${S.me?.login?'<span class="mut">@'+esc(S.me.login)+'</span>':''}<span class="tag ok">${S.me?.via=='browser'?'Browser session':'Telegram'}</span></div><div class="row" style="padding:0"><span>Enable browser login</span><label class="sw"><input type="checkbox" ${S.login?'checked':''} onchange="loginToggle(this)"><i></i></label></div>
@@ -401,16 +448,16 @@ load();
 /* ---- v4 helpers ---- */
 const ACC=[['Blue','10,132,255'],['Purple','191,90,242'],['Pink','255,55,95'],['Orange','255,159,10'],['Green','48,209,88'],['Teal','100,210,255']];
 const nameOf=u=>(S.admins||[]).find(a=>a.uid==u)?.name||(u==S.uid?'You':'Owner');
-const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('vb_pref')||'{}')}catch(e){}return{th:p.th||'dark',ac:p.ac||'10,132,255',fx:!!p.fx,gb:p.v==3?p.gb:8,gt:p.v==3?p.gt:12,gi:p.v==3?p.gi:100,sr:p.sr!==false,ig:p.ig!==false,gbd:p.gbd!==false,rf:p.rf!==false,v:3}})();
+const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('vb_pref')||'{}')}catch(e){}return{th:p.th||'dark',ac:p.ac||'10,132,255',fx:!!p.fx,gb:p.v>=3?p.gb:8,gt:p.v>=3?p.gt:12,gi:p.v>=3?p.gi:100,sr:p.sr!==false,ig:p.ig!==false,gbd:p.gbd!==false,rf:p.v==4&&p.rf===true,ns:p.ns||'bubble',nl:p.nl||'float',bg:p.bg||'default',ts:p.ts||100,m3d:p.m3d!==false,hp:p.hp!==false,v:4}})();
 const mq=window.matchMedia?matchMedia('(prefers-color-scheme: light)'):null;
 function applyPref(){const h=document.documentElement,l=PREF.th=='light'||(PREF.th=='system'&&mq&&mq.matches);h.dataset.th=l?'light':'dark';
-  h.style.setProperty('--ac','rgb('+PREF.ac+')');h.style.setProperty('--acrgb',PREF.ac);h.classList.toggle('lite',PREF.fx);h.style.setProperty('--gb',PREF.gb+'px');h.style.setProperty('--gt',PREF.gt/100);h.style.setProperty('--gi',PREF.gi/100);h.classList.toggle('no-sr',!PREF.sr);h.classList.toggle('no-ig',!PREF.ig);h.classList.toggle('no-gb',!PREF.gbd);
+  h.style.setProperty('--ac','rgb('+PREF.ac+')');h.style.setProperty('--acrgb',PREF.ac);h.classList.toggle('lite',PREF.fx);h.style.setProperty('--gb',PREF.gb+'px');h.style.setProperty('--gt',PREF.gt/100);h.style.setProperty('--gi',PREF.gi/100);h.classList.toggle('no-sr',!PREF.sr);h.classList.toggle('no-ig',!PREF.ig);h.classList.toggle('no-gb',!PREF.gbd);h.dataset.ns=PREF.ns;h.dataset.nl=PREF.nl;h.dataset.bg=PREF.bg;h.style.setProperty('--ts',PREF.ts/100);h.classList.toggle('no3d',!PREF.m3d||PREF.fx);
   const t=document.querySelector('meta[name=theme-color]');if(t)t.content=l?'#f2f2f7':'#000000';try{tg.setHeaderColor&&tg.setHeaderColor(l?'#f2f2f7':'#000000');tg.setBackgroundColor&&tg.setBackgroundColor(l?'#f2f2f7':'#000000')}catch(e){}}
 function persist(){try{localStorage.setItem('vb_pref',JSON.stringify(PREF))}catch(e){}}
 const RM=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
-function setPref(k,v){const h=document.documentElement;PREF[k]=v;persist();if(k=='th'){h.classList.add('nt');applyPref();render();requestAnimationFrame(()=>requestAnimationFrame(()=>h.classList.remove('nt')))}else{applyPref();render()}}
+function setPref(k,v){const h=document.documentElement;PREF[k]=v;persist();if(k=='th'){h.classList.add('nt');applyPref();render();requestAnimationFrame(()=>requestAnimationFrame(()=>h.classList.remove('nt')))}else{applyPref();render();if(k=='nl')requestAnimationFrame(()=>{px=null;movePill()})}}
 let gtm,gq=0,gv={};function setGlass(k,v){PREF[k]=+v;gv[k]=v;if(!gq)gq=requestAnimationFrame(()=>{gq=0;const h=document.documentElement.style;h.setProperty('--gb',PREF.gb+'px');h.setProperty('--gt',PREF.gt/100);h.setProperty('--gi',PREF.gi/100);for(const q in gv){const e=$('#g_'+q);if(e)e.textContent=gv[q]+(q=='gb'?'px':'%')}gv={}});clearTimeout(gtm);gtm=setTimeout(persist,300)}
-function resetGlass(){Object.assign(PREF,{gb:8,gt:12,gi:100,sr:true,ig:true,gbd:true,rf:true});persist();applyPref();lgBuild();render();toast('Glass reset')}
+function resetGlass(){Object.assign(PREF,{gb:8,gt:12,gi:100,sr:true,ig:true,gbd:true,rf:false});persist();applyPref();lgBuild();render();toast('Glass reset')}
 function resetTune(){const s=C().s;['rate','pitch','volume'].forEach(k=>{if(s[k]!==0){s[k]=0;mark(k)}});render();toast('Tuning reset')}
 function gs(k,l,a,b,u){return `<div class="act" style="margin-top:12px;align-items:center"><span>${l}</span><span class="val" id="g_${k}">${PREF[k]}${u}</span></div><input type="range" min="${a}" max="${b}" value="${PREF[k]}" style="--p:${(PREF[k]-a)/(b-a)*100}%" oninput="sp(this);setGlass('${k}',this.value)">`}
 function vClose(){const s=$('#sh');if(s.hidden||s.classList.contains('out'))return;const h=s.innerHTML;if(RM()||PREF.fx){s.hidden=true;return}s.classList.add('out');setTimeout(()=>{s.classList.remove('out');if(s.innerHTML===h)s.hidden=true},180)}
@@ -418,14 +465,14 @@ if(mq&&mq.addEventListener)mq.addEventListener('change',()=>PREF.th=='system'&&a
 function sp(el){el.style.setProperty('--p',(el.value-el.min)/(el.max-el.min)*100+'%')}
 function sbar(on){$('#sb').hidden=!on}
 let px=null,LR=0;
-function navSync(){const n=$('#nv');if(!n.dataset.b){n.innerHTML='<i class="pill"></i><i class="spot"></i>'+TABS.map(([k,i,l])=>`<button data-k="${k}" onclick="goTab('${k}')"><span>${i}</span><em>${l}</em></button>`).join('');n.dataset.b=1;
+function navSync(){const n=$('#nv');if(!n.dataset.b){n.innerHTML='<i class="gl"></i><div class="in"><i class="pill"></i>'+TABS.map(([k,i,l])=>`<button data-k="${k}" onclick="goTab('${k}')"><span>${i}</span><em>${l}</em></button>`).join('')+'</div>';n.dataset.b=1;
   n.addEventListener('pointerdown',e=>{if(e.target.closest('button'))n.classList.add('press')});['pointerup','pointercancel','pointerleave'].forEach(t=>n.addEventListener(t,()=>n.classList.remove('press')))}
   n.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k==tab));navBadges();movePill()}
 function goTab(k){if(k==tab)return;tab=k;render()}
 function movePill(){const n=$('#nv'),p=n.querySelector('.pill'),b=n.querySelector('button.on');if(!p||!b||n.hidden||!b.offsetWidth)return;
   const x=b.offsetLeft,w=b.offsetWidth;p.style.width=w+'px';p.style.height=b.offsetHeight+'px';p.style.top=b.offsetTop+'px';p.style.transform=`translateX(${x}px)`;
   if(px!==null&&px!==x&&!PREF.fx&&!RM()&&p.animate){const d=Math.abs(x-px),st=1+Math.min(.55,d/n.offsetWidth*1.5);
-    p.animate([{transform:`translateX(${px}px) scale(1,1)`},{transform:`translateX(${(px+x)/2}px) scale(${st+.08},${1-(st-1)*.3})`,offset:.4},{transform:`translateX(${x}px) scale(.96,1.05)`,offset:.72},{transform:`translateX(${x}px) scale(1,1)`}],{duration:560,easing:'cubic-bezier(.3,1.25,.5,1)'})}
+    p.animate([{transform:`translateX(${px}px) scale(1,1)`},{transform:`translateX(${(px+x)/2}px) scale(${st+.08},${1-(st-1)*.3}) rotateY(${(x>px?1:-1)*18}deg)`,offset:.4},{transform:`translateX(${x}px) scale(.96,1.05)`,offset:.72},{transform:`translateX(${x}px) scale(1,1)`}],{duration:560,easing:'cubic-bezier(.3,1.25,.5,1)'})}
   px=x}
 addEventListener('resize',()=>{px=null;movePill()});
 function graph(st){const d=st.daily||[],W=320,H=110,L=8,R=8,T=14,B=22;if(!d.length)return `<div class="card s4"><div class="act"><h4>Bot activity</h4><span class="live"><i></i>Live</span></div><div class="mut" style="padding:26px 0;text-align:center">No activity yet. Voices will appear here.</div></div>`;
@@ -448,19 +495,19 @@ async function doAddAdmin(){const id=+$('#aid').value.trim();if(!Number.isIntege
 async function doLogout(){try{await api('/api/logout',{})}catch(e){}load()}
 
 /* ---- v7: haptics, ripple, count-up, stagger, spotlight, offline ---- */
-const hap=(t)=>{try{t=='sel'?tg.HapticFeedback.selectionChanged():tg.HapticFeedback.impactOccurred(t||'light')}catch(e){}};
+const hap=(t)=>{if(PREF.hp===false)return;try{t=='sel'?tg.HapticFeedback.selectionChanged():tg.HapticFeedback.impactOccurred(t||'light')}catch(e){}};
 document.addEventListener('pointerdown',e=>{const t=e.target.closest('.btn,.seg button,nav button,.sws button,label.sw');if(!t)return;hap(t.matches('nav button')?'medium':'light');
   if(PREF.fx||RM()||!t.matches('.btn,.seg button'))return;const r=t.getBoundingClientRect(),s=Math.max(r.width,r.height)*2,p=document.createElement('i');p.className='rp';
   p.style.cssText=`width:${s}px;height:${s}px;left:${e.clientX-r.left-s/2}px;top:${e.clientY-r.top-s/2}px`;t.appendChild(p);setTimeout(()=>p.remove(),600)},{passive:true});
 let lastSel=0;document.addEventListener('input',e=>{if(e.target.type=='range'&&Date.now()-lastSel>60){lastSel=Date.now();hap('sel')}},{passive:true});
 const TI=['home','targets','voice','hist','more'];let NEWTAB=0,PT=tab;
-const _render=render;render=function(){_render();if(NEWTAB){NEWTAB=0;stagger()}countUps()};
+const _render=render;render=function(){_render();if(NEWTAB){NEWTAB=0;stagger()}countUps();moreExtras()};
 const _goTab=goTab;goTab=function(k){if(k==tab)return;document.documentElement.style.setProperty('--dir',TI.indexOf(k)>TI.indexOf(tab)?1:-1);NEWTAB=1;$('#m').scrollTop=0;_goTab(k)};
 function stagger(){if(PREF.fx||RM())return;const m=$('#m');m.classList.remove('stg');[...m.querySelectorAll(':scope>.card,:scope>.bento>.card')].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,9)));void m.offsetWidth;m.classList.add('stg');setTimeout(()=>m.classList.remove('stg'),900)}
 function countUps(){if(LR||PREF.fx||RM()||tab!='home')return;document.querySelectorAll('#m .big,#m .gs b').forEach(el=>{const t=el.textContent.trim(),k=/k$/.test(t),n=parseFloat(t);if(!isFinite(n)||!/^\d+(\.\d+)?k?$/.test(t))return;
   const dec=k?1:(t.includes('.')?1:0),t0=performance.now();(function f(now){const p=Math.min(1,(now-t0)/700),v=n*(1-Math.pow(1-p,3));el.textContent=v.toFixed(dec)+(k?'k':'');if(p<1)requestAnimationFrame(f);else el.textContent=t})(t0)})}
 (function(){const n=$('#nv');
-  n.addEventListener('pointermove',e=>{const r=n.getBoundingClientRect();n.style.setProperty('--mx',e.clientX-r.left+'px');n.classList.add('hov')},{passive:true});['pointerleave','pointerup'].forEach(t=>n.addEventListener(t,()=>n.classList.remove('hov')))})();
+  ['pointerleave','pointerup'].forEach(t=>n.addEventListener(t,()=>n.classList.remove('hov')))})();
 function onl(){$('#off').classList.toggle('on',!navigator.onLine)}addEventListener('online',onl);addEventListener('offline',onl);onl();
 async function exportS(){try{const d=await api('/api/export'),j=JSON.stringify(d,null,2);try{await navigator.clipboard.writeText(j)}catch(e){}
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([j],{type:'application/json'}));a.download='voicebot-settings.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Exported ✓ (also copied)')}catch(e){toast('Export failed',1)}}
@@ -492,4 +539,29 @@ function navBadges(){try{const c={home:['cartesia','elevenlabs'].filter(bad).len
   document.querySelectorAll('#nv button').forEach(b=>{const n=c[b.dataset.k]||0;let e=b.querySelector('.bdg');if(!n){if(e)e.remove();b.removeAttribute('aria-label');return}
     const t=n>9?'9+':String(n);if(!e){e=document.createElement('b');e.className='bdg';b.appendChild(e)}
     if(e.textContent!=t){e.textContent=t;e.classList.remove('pop');void e.offsetWidth;e.classList.add('pop')}b.setAttribute('aria-label',b.dataset.k+', '+n+' new')})}catch(e){}}
+
+/* ---- v13: 3D motion, settings search, diagnostics ---- */
+let TL=null,LT=0,MSQ='';
+document.addEventListener('pointerdown',e=>{if(PREF.fx||RM()||!PREF.m3d)return;const c=e.target.closest('#m .card');if(!c||e.target.closest('input,select,textarea,button,label,a,svg'))return;
+  const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.classList.add('tilt');
+  c.style.transform=`perspective(900px) rotateX(${(-y*7).toFixed(2)}deg) rotateY(${(x*9).toFixed(2)}deg) scale(.985)`;TL=c},{passive:true});
+['pointerup','pointercancel'].forEach(t=>document.addEventListener(t,()=>{if(TL){TL.classList.remove('tilt');TL.style.transform='';TL=null}},{passive:true}));
+function loginTilt(rx,ry,fast){const c=document.querySelector('.login');if(!c||PREF.fx||RM()||!PREF.m3d||(document.activeElement&&document.activeElement.tagName=='INPUT'))return;
+  cancelAnimationFrame(LT);LT=requestAnimationFrame(()=>{c.style.transition=fast?'transform .12s linear':'';c.style.transform=`rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`})}
+document.addEventListener('pointermove',e=>{const c=document.querySelector('.login');if(!c)return;const r=c.getBoundingClientRect();
+  loginTilt(-(e.clientY-(r.top+r.height/2))/innerHeight*16,(e.clientX-(r.left+r.width/2))/innerWidth*20,1)},{passive:true});
+['pointerup','pointerleave'].forEach(t=>document.addEventListener(t,()=>loginTilt(0,0,0),{passive:true}));
+addEventListener('deviceorientation',e=>{if(e.gamma==null||!document.querySelector('.login'))return;loginTilt(Math.max(-9,Math.min(9,-(e.beta-50)/6)),Math.max(-11,Math.min(11,e.gamma/5)),1)},{passive:true});
+function msFilter(v){MSQ=v.trim().toLowerCase();document.querySelectorAll('#m .card').forEach(c=>{c.hidden=!!MSQ&&!c.textContent.toLowerCase().includes(MSQ)})}
+function moreExtras(){if(tab!='more')return;const m=$('#m');if(!$('#ms'))m.insertAdjacentHTML('afterbegin',`<input type="search" id="ms" class="srch" placeholder="Search settings" value="${esc(MSQ)}" oninput="msFilter(this.value)" autocomplete="off">`);
+  if(!$('#dg')){const cs=n=>{try{return CSS.supports('backdrop-filter',n)}catch(e){return false}},R=[['App version','v13'],['Screen',`${innerWidth}×${innerHeight} @${devicePixelRatio}x`],['Telegram',`${tg.platform||'web'} ${tg.version||''}`],['Glass blur',cs('blur(1px)')?'Supported':'Not supported'],['Edge refraction',RFOK?(PREF.rf?'On':'Available'):'Unavailable'],['3D motion',PREF.m3d&&!PREF.fx&&!RM()?'On':'Off'],['Layout',PREF.nl=='classic'?'Classic bar':'Floating glass']];
+    m.insertAdjacentHTML('beforeend',`<div class="card s4" id="dg"><h4>Diagnostics</h4><div class="kv">${R.map(([a,b])=>`<span>${a}</span><b>${esc(b)}</b>`).join('')}</div><button class="btn sm ghost" onclick="fpsTest()">Run frame test</button><div id="fr" class="res">Measures your screen's refresh rate and dropped frames for 2 seconds. Scroll while it runs for a realistic result.</div></div>`)}
+  if(MSQ)msFilter(MSQ)}
+function fpsTest(){const o=$('#fr'),t=[];o.className='res';o.textContent='Measuring… keep scrolling';let last=performance.now(),end=last+2000;
+  (function f(n){t.push(n-last);last=n;if(n<end)requestAnimationFrame(f);else{t.shift();const s=[...t].sort((a,b)=>a-b),med=s[s.length>>1]||16.7,avg=t.reduce((a,b)=>a+b,0)/t.length,drop=t.filter(x=>x>med*1.5).length;
+    o.className='res '+(drop>t.length*.08?'bad':'ok');o.textContent=`≈${Math.round(1000/med)} Hz screen · ${(1000/avg).toFixed(0)} fps average · worst frame ${s[s.length-1].toFixed(0)} ms · ${drop} dropped of ${t.length}`}})(last)}
+
+/* ---- v13b: reset appearance, Escape closes popups ---- */
+function resetLook(){ask('Reset theme, accent, glass, layout, background and motion to defaults on this device?',()=>{Object.assign(PREF,{th:'dark',ac:'10,132,255',fx:false,gb:8,gt:12,gi:100,sr:true,ig:true,gbd:true,rf:false,ns:'bubble',nl:'float',bg:'default',ts:100,m3d:true,hp:true,v:4});persist();applyPref();render();requestAnimationFrame(()=>{px=null;movePill()});toast('Appearance reset')})}
+addEventListener('keydown',e=>{if(e.key=='Escape'&&!$('#sh').hidden)vClose()});
 </script></body></html>
