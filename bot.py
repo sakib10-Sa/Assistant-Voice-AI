@@ -630,6 +630,10 @@ def check_token(t):
     except Exception:
         return None
 
+def audit(uid, what):
+    """Security log: last 60 sign-in and admin events, shown to the owner."""
+    a = db.setdefault("audit", []); a.append({"t": int(time.time()), "u": uid, "w": str(what)[:80]}); del a[:-60]; save()
+
 def hash_pw(pw, salt=None):
     salt = salt or secrets.token_hex(8)
     return salt, hashlib.scrypt(pw.encode(), salt=salt.encode(), n=2 ** 14, r=8, p=1).hex()
@@ -681,6 +685,7 @@ async def api_state(req):
     if r == "owner":
         out["admins"] = [{"uid": k, **v, "login": lg.get(k, ""), "online": k in db.get("sess", {})} for k, v in db.get("admins", {}).items()]
         out["requests"] = [{"uid": k, **v} for k, v in db.get("requests", {}).items()]
+        out["audit"] = list(reversed(db.get("audit", [])[-30:]))
     return web.json_response(out)
 
 async def api_save(req):
@@ -763,8 +768,9 @@ async def api_request(req):
     return web.json_response({"role": r})
 
 async def api_admin(req):
-    await need(req, owner=True)
+    actor = await need(req, owner=True)
     b = await req.json(); uid = int(b["uid"]); a = b["action"]
+    audit(actor, f"Admin action: {a} {uid}")
     if a in ("approve", "deny"): await decide(req.app["bot"], uid, a == "approve")
     elif a in ("revoke", "signout"):
         if a == "revoke":
@@ -798,7 +804,10 @@ async def api_login(req):
     else:
         rec = db.get("creds", {}).get(u)
         if rec and hmac.compare_digest(hash_pw(p, rec["salt"])[1], rec["hash"]): uid = rec["uid"]
-    if uid is None or not is_staff(uid): raise web.HTTPUnauthorized(text="Invalid credentials")
+    if uid is None or not is_staff(uid):
+        audit(0, "Failed sign-in for '" + re.sub(r"[^a-z0-9_.\-]", "", u)[:24] + "'")
+        raise web.HTTPUnauthorized(text="Invalid credentials")
+    audit(uid, "Signed in (browser)")
     return web.json_response({"token": make_token(uid)})
 
 async def api_creds(req):
@@ -807,6 +816,7 @@ async def api_creds(req):
     if b.get("uid") and uid in OWNERS:  # the owner can set a login for any approved admin
         uid = int(b["uid"])
         if not is_staff(uid): raise web.HTTPBadRequest(text="Not an approved admin")
+    audit(caller, ("Login removed" if b.get("remove") else "Login set") + (f" for {uid}" if uid != caller else ""))
     if b.get("remove"):
         cr = db.setdefault("creds", {})
         for n in [n for n, v in cr.items() if v["uid"] == uid]: cr.pop(n)
@@ -826,8 +836,12 @@ async def api_creds(req):
 
 async def api_logout(req):
     uid, _ = auth(req)
-    if uid is not None: db.get("sess", {}).pop(str(uid), None); save()
+    if uid is not None: db.get("sess", {}).pop(str(uid), None); audit(uid, "Signed out")
     return web.json_response({"ok": True})
+
+async def api_export(req):
+    await need(req, owner=True)  # settings only: logins, sessions and the audit log are never exported
+    return web.json_response({k: v for k, v in db.items() if k not in ("creds", "sess", "audit")})
 
 async def api_backup(req):
     await need(req, owner=True)
@@ -1141,7 +1155,7 @@ async def post_init(app):
     w.add_routes([web.get("/", health), web.get("/health", health), web.get("/app", page), web.get("/api/state", api_state),
                   web.post("/api/save", api_save), web.post("/api/voice", api_voice), web.post("/api/action", api_action),
                   web.post("/api/preview", api_preview), web.post("/api/request", api_request),
-                  web.post("/api/login", api_login), web.post("/api/creds", api_creds), web.post("/api/backup", api_backup), web.post("/api/logout", api_logout),
+                  web.post("/api/login", api_login), web.post("/api/creds", api_creds), web.post("/api/backup", api_backup), web.post("/api/logout", api_logout), web.get("/api/export", api_export),
                   web.post("/api/admin", api_admin), web.get("/api/history", api_history),
                   web.post("/api/hist", api_hist), web.get("/api/histaudio", api_histaudio)])
     runner = web.AppRunner(w); await runner.setup()

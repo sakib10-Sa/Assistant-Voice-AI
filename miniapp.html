@@ -182,6 +182,9 @@ nav .spot{position:absolute;inset:0;border-radius:inherit;pointer-events:none;op
 .tl{position:relative;margin:2px 0 4px 6px}.tl:before{content:"";position:absolute;left:4px;top:6px;bottom:6px;width:1.5px;background:var(--hair)}
 .tl>div{position:relative;padding:5px 0 5px 22px;font-size:14px}.tl>div:before{content:"";position:absolute;left:0;top:11px;width:9px;height:9px;border-radius:50%;background:var(--ac);box-shadow:0 0 0 3px var(--card)}.tl>div.bad:before{background:var(--red)}.tl small{display:block;color:var(--mut);font-size:12px}
 html.lite .rp,html.lite .spot{display:none}
+/* nav pin fix: no transform on the fixed bar, so tapping/relayout can never shift it */
+nav{position:fixed;left:10px;right:10px;width:auto;margin:0 auto;transform:none;translate:none;bottom:calc(10px + env(safe-area-inset-bottom));max-width:520px}
+nav button,.sws button{will-change:auto}
 </style></head>
 <body>
 <header id="hd" hidden><select id="chat"></select></header><div class="savebar" id="sb" hidden><span id="sv">Unsaved changes</span><button class="btn pri sm" onclick="saveNow()">Save</button></div>
@@ -386,7 +389,7 @@ document.addEventListener('pointerdown',e=>{const t=e.target.closest('.btn,.seg 
 let lastSel=0;document.addEventListener('input',e=>{if(e.target.type=='range'&&Date.now()-lastSel>60){lastSel=Date.now();hap('sel')}},{passive:true});
 const TI=['home','targets','voice','hist','more'];let NEWTAB=0,PT=tab;
 const _render=render;render=function(){_render();if(NEWTAB){NEWTAB=0;stagger()}countUps()};
-const _goTab=goTab;goTab=function(k){if(k==tab)return;document.documentElement.style.setProperty('--dir',TI.indexOf(k)>TI.indexOf(tab)?1:-1);NEWTAB=1;scrollTo({top:0});_goTab(k)};
+const _goTab=goTab;goTab=function(k){if(k==tab)return;document.documentElement.style.setProperty('--dir',TI.indexOf(k)>TI.indexOf(tab)?1:-1);NEWTAB=1;if(scrollY>0)scrollTo(0,0);_goTab(k)};
 function stagger(){if(PREF.fx||RM())return;const m=$('#m');m.classList.remove('stg');[...m.querySelectorAll(':scope>.card,:scope>.bento>.card')].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,9)));void m.offsetWidth;m.classList.add('stg');setTimeout(()=>m.classList.remove('stg'),900)}
 function countUps(){if(LR||PREF.fx||RM()||tab!='home')return;document.querySelectorAll('#m .big,#m .gs b').forEach(el=>{const t=el.textContent.trim(),k=/k$/.test(t),n=parseFloat(t);if(!isFinite(n)||!/^\d+(\.\d+)?k?$/.test(t))return;
   const dec=k?1:(t.includes('.')?1:0),t0=performance.now();(function f(now){const p=Math.min(1,(now-t0)/700),v=n*(1-Math.pow(1-p,3));el.textContent=v.toFixed(dec)+(k?'k':'');if(p<1)requestAnimationFrame(f);else el.textContent=t})(t0)})}
