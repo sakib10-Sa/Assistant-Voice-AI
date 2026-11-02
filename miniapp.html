@@ -284,6 +284,27 @@ nav .in{perspective:500px}
 html.no3d .login,html.no3d .login *{transform:none!important}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;margin-bottom:10px}.kv span{color:var(--mut)}.kv b{font-weight:600;text-align:right}
 .srch{width:100%;margin:0 0 12px;padding-left:38px;background:var(--fill) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='8' cy='8' r='5.5'/%3E%3Cpath d='M12.5 12.5L16 16'/%3E%3C/svg%3E") no-repeat 12px 50%}
+/* ---- v14: sidebar, TTS/STT sections ---- */
+nav{z-index:25}
+#m{padding-top:calc(54px + env(safe-area-inset-top))}
+.drawer{position:fixed;left:10px;top:calc(58px + env(safe-area-inset-top));bottom:calc(var(--nh,76px) + 24px + env(safe-area-inset-bottom));width:min(290px,80vw);z-index:21;border-radius:28px;overflow:hidden;transform:translate3d(calc(-100% - 24px),0,0);transition:transform .5s cubic-bezier(.32,.72,0,1);pointer-events:none;box-shadow:0 14px 30px -10px rgba(0,0,0,.5);will-change:transform}
+.drawer.open{transform:none;pointer-events:auto}
+.drawer .gl,#mb .gl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,calc(.07*var(--gi,1))),rgba(255,255,255,0) 60%),rgba(255,255,255,var(--gt,.12));-webkit-backdrop-filter:blur(var(--gb,8px)) saturate(150%);backdrop-filter:blur(var(--gb,8px)) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,calc(.55*var(--gi,1))),inset 0 0 0 .5px rgba(255,255,255,calc(.28*var(--gi,1))),inset 0 0 20px rgba(255,255,255,calc(.1*var(--gi,1)))}
+html[data-th=light] .drawer .gl,html[data-th=light] #mb .gl{background:rgba(255,255,255,calc(var(--gt,.12) + .45));box-shadow:inset 0 0 20px rgba(255,255,255,.55)}
+html.lite .drawer .gl,html.lite #mb .gl{-webkit-backdrop-filter:none;backdrop-filter:none;background:#161618}html.lite[data-th=light] .drawer .gl,html.lite[data-th=light] #mb .gl{background:#f2f2f7}
+.dl{position:relative;height:100%;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:2px;overscroll-behavior:contain}
+.di{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:var(--tx);font:inherit;font-weight:500;padding:11px 12px;border-radius:14px;text-align:left;min-height:46px;transition:background .2s,color .2s}
+.di svg{width:22px;height:22px;flex:none}.di.on{background:rgba(var(--acrgb),.16);color:var(--ac)}.di:active{opacity:.7}
+.dh{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);padding:10px 12px 4px}.dsp{height:.5px;background:var(--hair);margin:8px 6px}
+#scrim{position:fixed;left:0;right:0;top:0;bottom:calc(var(--nh,76px) + 22px + env(safe-area-inset-bottom));z-index:20;background:rgba(0,0,0,.32);opacity:0;pointer-events:none;transition:opacity .35s}#scrim.on{opacity:1;pointer-events:auto}
+#mb{position:fixed;z-index:22;left:12px;top:calc(8px + env(safe-area-inset-top));width:42px;height:42px;border-radius:50%;border:0;background:none;color:var(--tx);padding:0}
+#mb span{position:absolute;left:13px;right:13px;height:2px;border-radius:2px;background:currentColor;transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .2s,top .4s cubic-bezier(.34,1.56,.64,1)}
+#mb span:nth-of-type(1){top:14px}#mb span:nth-of-type(2){top:20px}#mb span:nth-of-type(3){top:26px}
+#mb.open span:nth-of-type(1){top:20px;transform:rotate(45deg)}#mb.open span:nth-of-type(2){opacity:0}#mb.open span:nth-of-type(3){top:20px;transform:rotate(-45deg)}
+body.lg #mb,body.lg .drawer,body.lg #scrim{display:none}body.lg #m{padding-top:14px}
+.bar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;width:0;background:var(--ac);border-radius:3px;transition:width .3s var(--ease)}
+.fl{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:var(--fill);margin:8px 0;font-size:14px}.fl b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fl small{color:var(--mut)}
+textarea.big{min-height:130px;resize:vertical}audio{width:100%;margin-top:10px}
 </style></head>
 <body>
 <header id="hd" hidden><select id="chat"></select></header><div class="savebar" id="sb" hidden><span id="sv">Unsaved changes</span><button class="btn pri sm" onclick="saveNow()">Save</button></div>
@@ -469,7 +490,7 @@ function navSync(){const n=$('#nv');if(!n.dataset.b){n.innerHTML='<i class="gl">
   n.addEventListener('pointerdown',e=>{if(e.target.closest('button'))n.classList.add('press')});['pointerup','pointercancel','pointerleave'].forEach(t=>n.addEventListener(t,()=>n.classList.remove('press')))}
   n.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k==tab));navBadges();movePill()}
 function goTab(k){if(k==tab)return;tab=k;render()}
-function movePill(){const n=$('#nv'),p=n.querySelector('.pill'),b=n.querySelector('button.on');if(!p||!b||n.hidden||!b.offsetWidth)return;
+function movePill(){const n=$('#nv'),p=n.querySelector('.pill'),b=n.querySelector('button.on');if(p&&!b){p.style.opacity=0;return}if(!p||n.hidden||!b.offsetWidth)return;p.style.opacity='';
   const x=b.offsetLeft,w=b.offsetWidth;p.style.width=w+'px';p.style.height=b.offsetHeight+'px';p.style.top=b.offsetTop+'px';p.style.transform=`translateX(${x}px)`;
   if(px!==null&&px!==x&&!PREF.fx&&!RM()&&p.animate){const d=Math.abs(x-px),st=1+Math.min(.55,d/n.offsetWidth*1.5);
     p.animate([{transform:`translateX(${px}px) scale(1,1)`},{transform:`translateX(${(px+x)/2}px) scale(${st+.08},${1-(st-1)*.3}) rotateY(${(x>px?1:-1)*18}deg)`,offset:.4},{transform:`translateX(${x}px) scale(.96,1.05)`,offset:.72},{transform:`translateX(${x}px) scale(1,1)`}],{duration:560,easing:'cubic-bezier(.3,1.25,.5,1)'})}
@@ -501,7 +522,7 @@ document.addEventListener('pointerdown',e=>{const t=e.target.closest('.btn,.seg 
   p.style.cssText=`width:${s}px;height:${s}px;left:${e.clientX-r.left-s/2}px;top:${e.clientY-r.top-s/2}px`;t.appendChild(p);setTimeout(()=>p.remove(),600)},{passive:true});
 let lastSel=0;document.addEventListener('input',e=>{if(e.target.type=='range'&&Date.now()-lastSel>60){lastSel=Date.now();hap('sel')}},{passive:true});
 const TI=['home','targets','voice','hist','more'];let NEWTAB=0,PT=tab;
-const _render=render;render=function(){_render();if(NEWTAB){NEWTAB=0;stagger()}countUps();moreExtras()};
+const _render=render;render=function(){_render();if(NEWTAB){NEWTAB=0;stagger()}countUps();moreExtras();menuSync()};
 const _goTab=goTab;goTab=function(k){if(k==tab)return;document.documentElement.style.setProperty('--dir',TI.indexOf(k)>TI.indexOf(tab)?1:-1);NEWTAB=1;$('#m').scrollTop=0;_goTab(k)};
 function stagger(){if(PREF.fx||RM())return;const m=$('#m');m.classList.remove('stg');[...m.querySelectorAll(':scope>.card,:scope>.bento>.card')].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,9)));void m.offsetWidth;m.classList.add('stg');setTimeout(()=>m.classList.remove('stg'),900)}
 function countUps(){if(LR||PREF.fx||RM()||tab!='home')return;document.querySelectorAll('#m .big,#m .gs b').forEach(el=>{const t=el.textContent.trim(),k=/k$/.test(t),n=parseFloat(t);if(!isFinite(n)||!/^\d+(\.\d+)?k?$/.test(t))return;
@@ -564,4 +585,62 @@ function fpsTest(){const o=$('#fr'),t=[];o.className='res';o.textContent='Measur
 /* ---- v13b: reset appearance, Escape closes popups ---- */
 function resetLook(){ask('Reset theme, accent, glass, layout, background and motion to defaults on this device?',()=>{Object.assign(PREF,{th:'dark',ac:'10,132,255',fx:false,gb:8,gt:12,gi:100,sr:true,ig:true,gbd:true,rf:false,ns:'bubble',nl:'float',bg:'default',ts:100,m3d:true,hp:true,v:4});persist();applyPref();render();requestAnimationFrame(()=>{px=null;movePill()});toast('Appearance reset')})}
 addEventListener('keydown',e=>{if(e.key=='Escape'&&!$('#sh').hidden)vClose()});
+
+/* ---- v14: sidebar menu + TTS / STT sections ---- */
+const IC={"tts": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10v4h3l5 4V6L7 10H4z\"/><path d=\"M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11\"/></svg>", "stt": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21\"/><path d=\"M3 5h2M19 5h2M2 8h2M20 8h2\"/></svg>", "vsel": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"8\" r=\"3.6\"/><path d=\"M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6\"/><path d=\"M19 4v4M17 6h4\"/></svg>"};
+const DI=[['hdr','Studio'],['tts','Text to Speech'],['stt','Speech to Text'],['vsel','Voices & IDs'],['sp'],['hdr','Navigate'],['home','Home'],['targets','Targets'],['voice','Voice engine'],['hist','History'],['more','Settings']];
+(function(){const ic=k=>IC[k]||(TABS.find(t=>t[0]==k)||[])[1]||'';
+  document.body.insertAdjacentHTML('beforeend',`<div id="scrim" onclick="menu(0)"></div><aside class="drawer" id="dr" aria-label="Menu"><i class="gl"></i><div class="dl">${DI.map(([k,l])=>k=='hdr'?`<div class="dh">${l}</div>`:k=='sp'?'<div class="dsp"></div>':`<button class="di" data-k="${k}" onclick="menuGo('${k}')">${ic(k)}<span>${l}</span></button>`).join('')}</div></aside><button id="mb" onclick="menu()" aria-label="Menu" aria-expanded="false"><i class="gl"></i><span></span><span></span><span></span></button>`)})();
+function menu(o){const d=$('#dr'),on=o==null?!d.classList.contains('open'):!!o;d.classList.toggle('open',on);$('#scrim').classList.toggle('on',on);const b=$('#mb');b.classList.toggle('open',on);b.setAttribute('aria-expanded',on);hap('light')}
+function menuGo(k){menu(0);goTab(k)}
+function menuSync(){document.querySelectorAll('.di').forEach(b=>b.classList.toggle('on',b.dataset.k==tab))}
+addEventListener('keydown',e=>{if(e.key=='Escape')menu(0)});
+const _vv=V.voice,isVC=c=>/voice library|edge voices/i.test((c.querySelector('h4')||{}).textContent||'');
+V.voice=function(){const t=document.createElement('template');t.innerHTML=_vv();t.content.querySelectorAll('.card').forEach(c=>{if(isVC(c))c.remove()});return t.innerHTML};
+V.vsel=function(){const t=document.createElement('template');t.innerHTML=_vv();const k=[...t.content.querySelectorAll('.card')].filter(isVC);return `<div class="bento">${k.map(c=>c.outerHTML).join('')||'<div class="card s4 mut">No voice cards found.</div>'}</div>`};
+const MOD=()=>S.models||{el_tts:['eleven_multilingual_v2'],ca_tts:['sonic-3.6'],el_stt:['scribe_v2'],ca_stt:['ink-whisper']};
+const mseg=(cur,opts,fn)=>`<div class="seg${opts.length==2?' two':''}">${opts.map(([v,t])=>`<button class="${cur==v?'on':''}" onclick="${fn}('${v}')">${t}</button>`).join('')}</div>`;
+let TS={prov:'elevenlabs',lang:'en',text:''},ST={prov:'elevenlabs',lang:'',file:null,busy:0,text:'',meta:''};
+V.tts=function(){const s=C().s,M=MOD(),lib=(S.voice_lib||[]).filter(v=>v.prov==TS.prov&&v.lang==TS.lang),cur=TS.prov=='edge'?s['voice_'+TS.lang]:s[TS.prov+'_voice_'+TS.lang];
+  const vo=TS.prov=='edge'?(S.voices[TS.lang]||[]).map(v=>[v,vname(v)]):lib.map(v=>[v.id,v.name]);
+  return `<div class="bento"><div class="card s4"><h4>Text to Speech</h4>${mseg(TS.prov,[['elevenlabs','ElevenLabs'],['cartesia','Cartesia'],['edge','Edge']],'ttsP')}
+  <div style="height:10px"></div>${mseg(TS.lang,[['bn','Bangla'],['en','English']],'ttsL')}
+  ${TS.prov=='elevenlabs'?sel('el_tts_model','Model',M.el_tts.map(x=>[x,x])):TS.prov=='cartesia'?sel('ca_tts_model','Model',M.ca_tts.map(x=>[x,x])):''}
+  <label class="l" for="tv">Voice</label><select id="tv">${vo.map(([v,n])=>`<option value="${esc(v)}" ${v==cur?'selected':''}>${esc(n)}</option>`).join('')||'<option value="">No voice for this language. Add one in Voices &amp; IDs.</option>'}</select>
+  <label class="l" for="tt">Text</label><textarea id="tt" class="big" maxlength="1000" placeholder="Type or paste text (up to 1000 characters)">${esc(TS.text)}</textarea>
+  <div class="act" style="align-items:center;margin-top:10px"><span class="mut" id="tc">${TS.text.length}/1000</span><button class="btn pri" id="tg" onclick="ttsGo()">Generate</button></div><div id="to"></div><div id="tr" class="res" style="display:none"></div></div>
+  ${TS.prov=='elevenlabs'?`<div class="card s4"><div class="act" style="align-items:center"><h4>ElevenLabs credits</h4><button class="btn sm ghost" onclick="credCheck()">Check</button></div><div id="cr" class="res">Tap Check to read your real balance from ElevenLabs.</div></div>`:''}</div>`};
+function ttsP(v){TS.text=($('#tt')||{}).value||TS.text;TS.prov=v;render()}function ttsL(v){TS.text=($('#tt')||{}).value||TS.text;TS.lang=v;render()}
+document.addEventListener('input',e=>{if(e.target.id=='tt'){TS.text=e.target.value;$('#tc').textContent=e.target.value.length+'/1000'}});
+async function ttsGo(){const t=$('#tt').value.trim(),r=$('#tr');if(!t)return toast('Type some text',1);TS.text=t;const s={...C().s,provider:TS.prov,lang:TS.lang},v=$('#tv').value;
+  if(TS.prov=='edge')s['voice_'+TS.lang]=v;else s[TS.prov+'_voice_'+TS.lang]=v;
+  const b=$('#tg');b.disabled=true;b.classList.add('ld');r.style.display='none';
+  try{const x=await api('/api/preview',{s,text:t,lang:TS.lang},1),u=URL.createObjectURL(await x.blob());$('#to').innerHTML=`<audio controls autoplay src="${u}"></audio><a class="btn sm ghost" style="margin-top:10px" download="speech.mp3" href="${u}">Download MP3</a>`}
+  catch(e){r.style.display='';r.className='res bad';r.textContent=(e.message||'Failed').slice(0,240)}b.disabled=false;b.classList.remove('ld')}
+async function credCheck(){const e=$('#cr');e.className='res';e.textContent='Checking…';try{const j=(await api('/api/credits')).elevenlabs||{};
+  if(j.error){e.className='res bad';e.textContent=j.error}else{const p=j.limit?Math.round(j.used/j.limit*100):0;e.className='res ok';e.innerHTML=`<b>${j.left.toLocaleString()}</b> of ${j.limit.toLocaleString()} credits left · ${esc(j.tier||'')}<div class="bar"><i style="width:${p}%"></i></div>`}}catch(x){e.className='res bad';e.textContent='Could not check'}}
+const LG=[['','Auto-detect'],['en','English'],['bn','Bangla'],['hi','Hindi'],['ur','Urdu'],['ar','Arabic'],['es','Spanish'],['fr','French'],['de','German'],['pt','Portuguese'],['ru','Russian'],['tr','Turkish'],['zh','Chinese'],['ja','Japanese'],['ko','Korean']];
+V.stt=function(){const M=MOD(),f=ST.file;
+  return `<div class="bento"><div class="card s4"><h4>Speech to Text</h4>${mseg(ST.prov,[['elevenlabs','ElevenLabs Scribe'],['cartesia','Cartesia Ink']],'sttP')}
+  ${ST.prov=='elevenlabs'?sel('el_stt_model','Model',M.el_stt.map(x=>[x,x])):sel('ca_stt_model','Model',M.ca_stt.map(x=>[x,x]))}
+  <label class="l" for="sl">Language</label><select id="sl" onchange="ST.lang=this.value">${LG.map(([v,t])=>`<option value="${v}" ${ST.lang==v?'selected':''}>${t}</option>`).join('')}</select>
+  <div class="hint">${ST.prov=='cartesia'?'Cartesia needs a language (Auto uses English). Bangla works best with ElevenLabs Scribe.':'Scribe detects the language automatically.'}</div>
+  <label class="btn" style="display:block;text-align:center;margin-top:12px;cursor:pointer">Choose audio or video file<input type="file" id="sf" accept="audio/*,video/*,.mp3,.wav,.m4a,.mp4,.mov,.webm,.ogg,.flac,.mkv" hidden onchange="sttFile(this.files[0])"></label>
+  <div class="fl" id="sfi" ${f?'':'hidden'}><b>${f?esc(f.name):''}</b><small>${f?(f.size/1048576).toFixed(1)+' MB':''}</small></div>
+  <div class="hint">Up to 40 MB. Video files work with ElevenLabs; Cartesia accepts mp3, wav, m4a, mp4, webm, ogg and flac.</div>
+  <button class="btn pri" id="sg" style="width:100%;margin-top:12px" onclick="sttRun()">Transcribe</button>
+  <div class="bar" id="sbr" hidden><i></i></div><div id="sst" class="res" style="display:none"></div></div>
+  ${ST.text?`<div class="card s4"><div class="act" style="align-items:center"><h4>Transcript</h4><span class="mut">${esc(ST.meta)}</span></div><textarea id="so" class="big" oninput="ST.text=this.value">${esc(ST.text)}</textarea>
+  <div class="g g2" style="margin-top:10px"><button class="btn sm ghost" onclick="sttCopy()">Copy</button><button class="btn sm ghost" onclick="sttSave()">Download .txt</button></div></div>`:''}</div>`};
+function sttP(v){ST.prov=v;render()}
+function sttFile(f){if(!f)return;ST.file=f;const e=$('#sfi');e.hidden=false;e.innerHTML=`<b>${esc(f.name)}</b><small>${(f.size/1048576).toFixed(1)} MB</small>`}
+function sttUI(t,p,bad){const e=$('#sst'),b=$('#sbr');if(!e)return;e.style.display='';e.className='res'+(bad?' bad':'');e.textContent=t;b.hidden=false;b.firstChild.style.width=Math.round((p||0)*100)+'%'}
+function sttRun(){if(ST.busy)return;if(!ST.file)return toast('Choose a file first',1);if(ST.file.size>40*1048576)return toast('The file is over 40 MB',1);
+  const s=C().s,fd=new FormData(),x=new XMLHttpRequest();fd.append('provider',ST.prov);fd.append('model',ST.prov=='elevenlabs'?s.el_stt_model:s.ca_stt_model);fd.append('language',ST.lang);fd.append('file',ST.file);
+  x.open('POST','/api/stt');const h=hdr();for(const k in h)x.setRequestHeader(k,h[k]);ST.busy=1;$('#sg').disabled=true;sttUI('Uploading…',0);
+  x.upload.onprogress=e=>{if(e.lengthComputable)sttUI(e.loaded<e.total?'Uploading… '+Math.round(e.loaded/e.total*100)+'%':'Transcribing… this can take a while for long files',e.loaded/e.total)};
+  x.onload=()=>{ST.busy=0;if(x.status==200){try{const j=JSON.parse(x.responseText);ST.text=j.text||'(no speech found)';ST.meta=j.provider+' · '+j.model;render();toast('Transcribed ✓')}catch(e){sttUI('Unexpected reply',0,1)}}else{$('#sg').disabled=false;sttUI((x.responseText||'Failed ('+x.status+')').slice(0,260),0,1)}};
+  x.onerror=()=>{ST.busy=0;$('#sg').disabled=false;sttUI('Network error',0,1)};x.send(fd)}
+async function sttCopy(){try{await navigator.clipboard.writeText(ST.text);toast('Copied ✓')}catch(e){const t=$('#so');t.select();document.execCommand('copy');toast('Copied ✓')}}
+function sttSave(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ST.text],{type:'text/plain'}));a.download='transcript.txt';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
 </script></body></html>

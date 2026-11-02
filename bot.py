@@ -63,6 +63,13 @@ DEFAULTS = {
 }
 ENUMS = {"provider": set(PROVIDERS), "lang": {"auto", "bn", "en"}, "preset": set(PRESETS),
          "voice_bn": set(VOICES["bn"]), "voice_en": set(VOICES["en"])}
+MODELS = {"el_tts": ["eleven_multilingual_v2", "eleven_flash_v2_5", "eleven_turbo_v2_5", "eleven_v3"],
+          "ca_tts": ["sonic-3.6", "sonic-3.5", "sonic-3"], "el_stt": ["scribe_v2", "scribe_v1"], "ca_stt": ["ink-whisper"]}
+_em, _cm = os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2"), os.getenv("CARTESIA_MODEL", "sonic-3.6")
+if _em not in MODELS["el_tts"]: MODELS["el_tts"].insert(0, _em)
+if _cm not in MODELS["ca_tts"]: MODELS["ca_tts"].insert(0, _cm)
+DEFAULTS.update({"el_tts_model": _em, "ca_tts_model": _cm, "el_stt_model": "scribe_v2", "ca_stt_model": "ink-whisper"})
+ENUMS.update({"el_tts_model": set(MODELS["el_tts"]), "ca_tts_model": set(MODELS["ca_tts"]), "el_stt_model": set(MODELS["el_stt"]), "ca_stt_model": set(MODELS["ca_stt"])})
 CLAMP = {"default_timer": (1, 600), "rate": (-50, 100), "pitch": (-50, 50), "volume": (-50, 50),
          "el_stability": (0, 100), "el_similarity": (0, 100), "min_chars": (1, 500), "max_chars": (40, 5000)}
 ID_RE = re.compile(r"^[A-Za-z0-9_\-]{6,80}$")
@@ -298,6 +305,8 @@ KIND_TEXT = {
     "config": "API key or voice ID is not set",
     "server": "service is down or unreachable",
     "other": "request was rejected",
+    "blocked": "ElevenLabs blocked this server (unusual-activity protection)",
+    "model": "that model is not available on your plan or does not exist",
 }
 KIND_FIX = {
     "quota": "Add credits or upgrade the plan, or switch provider in Panel > Voice > Provider.",
@@ -308,6 +317,8 @@ KIND_FIX = {
     "config": "Set the API key and voice ID.",
     "server": "The provider seems to be down. It should recover by itself.",
     "other": "Check the details below.",
+    "blocked": "ElevenLabs disables free-tier API use from some hosting IPs. Use a paid plan, or use Cartesia/Edge from this server.",
+    "model": "Pick another model in the TTS section.",
 }
 QUOTA_WORDS = ("quota", "credit", "insufficient", "billing", "payment required", "out of characters",
                "character limit", "usage limit")
@@ -328,59 +339,28 @@ class TTSFailure(RuntimeError):
 
 
 def classify(status, body):
-    b = (body or "").lower()
-    if "paid_plan_required" in b or "library voice" in b:
-        return "plan"
-    if status == 402:
-        return "quota"
-    if status == 429:
-        return "quota" if any(w in b for w in ("quota", "credit", "character")) else "rate"
-    if any(w in b for w in QUOTA_WORDS):
-        return "quota"
-    if status in (401, 403):
-        return "auth"
-    if status == 404 or (status in (400, 422) and "voice" in b):
-        return "voice"
-    if status >= 500:
-        return "server"
+    """Structured error code first (that is what the providers actually send); loose keywords are no longer used,
+    because words like 'credit' or 'insufficient' appear in unrelated errors and caused false 'out of credits'."""
+    b = (body or "").lower(); code = ""
+    try:
+        d = json.loads(body); d = d.get("detail", d) if isinstance(d, dict) else {}
+        code = str(d.get("status") or d.get("code") or d.get("type") or "").lower() if isinstance(d, dict) else ""
+    except Exception:
+        pass
+    if code in ("detected_unusual_activity", "unusual_activity"): return "blocked"
+    if code in ("paid_plan_required", "payment_required") or "library voice" in b: return "plan"
+    if code in ("quota_exceeded", "insufficient_quota", "credits_exhausted"): return "quota"
+    if code in ("invalid_api_key", "needs_authorization", "missing_permissions", "invalid_token", "unauthorized"): return "auth"
+    if code in ("too_many_concurrent_requests", "rate_limit_exceeded", "system_busy"): return "rate"
+    if code in ("voice_not_found", "voice_not_fine_tuned"): return "voice"
+    if code in ("model_not_found", "model_can_not_do_text_to_speech"): return "model"
+    if status == 402: return "quota"
+    if status == 429: return "quota" if ("credit" in b or "quota" in b) else "rate"
+    if status in (401, 403): return "auth"
+    if status in (400, 422) and "model" in b: return "model"
+    if status == 404 or (status in (400, 422) and "voice" in b): return "voice"
+    if status >= 500: return "server"
     return "other"
-
-
-async def notify_owners(key, text, cooldown=3600):
-    if time.time() - notified.get(key, 0) < cooldown or not app_ref.get("bot"):
-        return
-    notified[key] = time.time()
-    for o in OWNERS:
-        try: await app_ref["bot"].send_message(o, text[:800])
-        except Exception: pass
-
-
-def note_ok(p):
-    st = pstat.get(p)
-    if st is None:
-        return
-    was_bad = st["ok"] is False
-    st.update(ok=True, kind="", msg="", ts=time.time())
-    if was_bad:
-        asyncio.create_task(notify_owners((p, "recovered"), f"✅ {PNAME[p]} is working again.", 0))
-
-
-def note_failure(p, e):
-    st = pstat.get(p)
-    if st is not None:
-        st.update(ok=False, kind=e.kind, msg=KIND_TEXT.get(e.kind, ""), ts=time.time())
-    text = f"⚠️ {PNAME.get(p, p)} problem: {KIND_TEXT.get(e.kind, e.kind)}\nFix: {KIND_FIX.get(e.kind, '')}"
-    if e.detail:
-        text += f"\nDetails: {e.detail[:200]}"
-    asyncio.create_task(notify_owners((p, e.kind), text, 900 if e.kind in ("server", "rate") else 3600))
-
-
-def user_error(exc, uid):
-    if isinstance(exc, TTSFailure):
-        if is_staff(uid):
-            return f"⚠️ Voice could not be created.\n{exc}\nOpen the panel (Home) for the fix."
-        return "⚠️ The voice service is temporarily unavailable. The owner has been notified."
-    return "⚠️ Voice could not be created. Please try again in a moment."
 
 
 async def post_audio(provider, url, headers, payload):
@@ -405,16 +385,35 @@ async def cartesia_tts(text, s, lang):
         raise TTSError("cartesia", "config", f"no {lang} voice selected: Voice > Voice library > Use, then Save")
     rate = max(0.6, min(1.5, 1.0 + float(s.get("rate", 0)) / 200))
     volume = max(0.5, min(2.0, 1.0 + float(s.get("volume", 0)) / 50))
+    mdl = s.get("ca_tts_model") or "sonic-3.6"
     payload = {
-        "model_id": os.getenv("CARTESIA_MODEL", "sonic-3.6"),
+        "model_id": mdl,
         "transcript": text,
         "voice": {"mode": "id", "id": voice_id},
         "language": "bn" if lang == "bn" else "en",
-        "output_format": {"container": "mp3", "encoding": "mp3", "sample_rate": 44100},
-        "generation_config": {"speed": rate, "volume": volume},
+        "output_format": {"container": "mp3", "sample_rate": 44100, "bit_rate": 128000},
     }
-    headers = {"Authorization": f"Bearer {CARTESIA_API_KEY}", "Cartesia-Version": "2025-04-16", "Content-Type": "application/json"}
+    if mdl.startswith("sonic-3"): payload["generation_config"] = {"speed": rate, "volume": volume}  # only sonic-3 models accept it
+    headers = {"Authorization": f"Bearer {CARTESIA_API_KEY}", "X-API-Key": CARTESIA_API_KEY, "Cartesia-Version": "2025-04-16", "Content-Type": "application/json"}
     return await post_audio("cartesia", "https://api.cartesia.ai/tts/bytes", headers, payload)
+
+_bal = {"t": 0, "v": None}
+async def el_balance(force=False):
+    """Real credit balance from ElevenLabs. Needs a key with the 'User > Read' permission."""
+    if not ELEVENLABS_API_KEY: return None
+    if not force and time.time() - _bal["t"] < 30: return _bal["v"]
+    v = {"error": "Could not reach ElevenLabs"}
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as ses:
+            async with ses.get("https://api.elevenlabs.io/v1/user/subscription", headers={"xi-api-key": ELEVENLABS_API_KEY}) as r:
+                t = await r.text()
+                if r.status == 200:
+                    j = json.loads(t); used, lim = int(j.get("character_count", 0)), int(j.get("character_limit", 0))
+                    v = {"used": used, "limit": lim, "left": max(0, lim - used), "tier": j.get("tier", ""), "status": j.get("status", "")}
+                else:
+                    v = {"error": f"HTTP {r.status} ({classify(r.status, t)}): " + ("this key lacks the User > Read permission, so the balance cannot be shown" if "missing_permissions" in t else t[:120])}
+    except Exception: pass
+    _bal.update(t=time.time(), v=v); return v
 
 async def elevenlabs_tts(text, s, lang):
     voice_id = (s.get("elevenlabs_voice_bn") or os.getenv("ELEVENLABS_VOICE_BN", "").strip()) if lang == "bn" else (s.get("elevenlabs_voice_en") or os.getenv("ELEVENLABS_VOICE_EN", "").strip())
@@ -423,11 +422,20 @@ async def elevenlabs_tts(text, s, lang):
     if not voice_id:
         raise TTSError("elevenlabs", "config", f"no {lang} voice selected: Voice > Voice library > Use, then Save")
     speed = max(0.7, min(1.2, 1.0 + float(s.get("rate", 0)) / 250))
-    payload = {"text": text, "model_id": os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2"),
+    mdl = s.get("el_tts_model") or "eleven_multilingual_v2"
+    payload = {"text": text, "model_id": mdl,
                "voice_settings": {"stability": int(s.get("el_stability", 50)) / 100, "similarity_boost": int(s.get("el_similarity", 75)) / 100, "speed": speed}}
+    if mdl == "eleven_v3": payload.pop("voice_settings")  # v3 ignores speed/similarity
     headers = {"xi-api-key": ELEVENLABS_API_KEY, "Content-Type": "application/json", "Accept": "audio/mpeg"}
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}?output_format=mp3_44100_128"
-    return await post_audio("elevenlabs", url, headers, payload)
+    try:
+        return await post_audio("elevenlabs", url, headers, payload)
+    except TTSError as e:
+        if e.kind == "quota":  # verify against the real balance before telling anyone they are out of credits
+            bal = await el_balance(force=True)
+            if bal and bal.get("left", 0) >= len(text):
+                raise TTSError("elevenlabs", "other", f"API said quota, but the account shows {bal['left']} of {bal['limit']} credits left ({bal['tier']}). Raw: {e.detail[:140]}") from e
+        raise
 
 async def tts_full(text, s, lang=None):
     """Returns (mp3 bytes, provider_used). both = Cartesia -> ElevenLabs -> Edge fallback."""
@@ -664,7 +672,7 @@ async def api_state(req):
     uid, _ = auth(req)
     if uid is None: raise web.HTTPUnauthorized(text="login required")
     r = role_of(uid)
-    out = {"role": r, "uid": uid, "in_tg": bool(req.headers.get("X-Init"))}
+    out = {"role": r, "uid": uid, "in_tg": bool(req.headers.get("X-Init")), "models": MODELS}
     if r not in ("owner", "admin"): return web.json_response(out)
     out["keys"] = {"cartesia": bool(CARTESIA_API_KEY), "elevenlabs": bool(ELEVENLABS_API_KEY)}
     out["status"] = {p: {"ok": None if (v["ok"] is False and time.time() - v["ts"] > 1800) else v["ok"], "kind": v["kind"]}
@@ -754,7 +762,7 @@ async def api_preview(req):
     b = await req.json()
     s = {**DEFAULTS, **sanitize(b.get("s", {}))}
     try:
-        audio, prov = await tts_full(str(b.get("text", "Hello"))[:300], s, b.get("lang") or None)
+        audio, prov = await tts_full(str(b.get("text", "Hello"))[:1000], s, b.get("lang") or None)
     except TTSFailure as exc:
         raise web.HTTPBadGateway(text=str(exc)[:200])
     except Exception:
@@ -1091,8 +1099,38 @@ def lib_text(s):
     return f"🎙 Voice library ({len(L)}):\n" + "\n".join(
         f"{'✅' if s.get(x['prov'] + '_voice_' + x['lang']) == x['id'] else '▫️'} {x['name']} — {x['prov']}/{x['lang']}" for x in L)
 
+def voices_kb(s):
+    """Two-column button grid: shared library voices first, then Edge voices per language."""
+    items = [(("✅ " if s.get(x["prov"] + "_voice_" + x["lang"]) == x["id"] else "") + x["name"], f"vs:{i}") for i, x in enumerate(lib())]
+    for lg in ("bn", "en"):
+        for k, v in enumerate(VOICES[lg]):
+            items.append((("✅ " if s.get("voice_" + lg) == v else "") + v.split("-", 2)[-1].replace("Neural", "") + f" · Edge {lg}", f"ve:{lg}:{k}"))
+    return InlineKeyboardMarkup([[InlineKeyboardButton(t[:34], callback_data=d) for t, d in items[i:i + 2]] for i in range(0, len(items), 2)])
+
 async def voices_cmd(update, ctx):
-    await say(update, lib_text(cfg(command_scope(update))))
+    await update.effective_message.reply_text("🎙 Choose a voice (✅ = in use). Library voices and Edge voices are listed together.\nOnly approved admins can change it.",
+                                              reply_markup=voices_kb(cfg(command_scope(update))))
+
+async def cb_voice(update, ctx):
+    q = update.callback_query; u, c = q.from_user, q.message.chat
+    if not (is_staff(u.id) if c.type == "private" else await can_manage(ctx.bot, u.id, c.id)):
+        return await q.answer("Only approved admins can change voices", show_alert=True)
+    scope = "__global__" if c.type == "private" else c.id; s = cfg(scope)
+    try:
+        p = q.data.split(":")
+        if p[0] == "vs":
+            x = lib()[int(p[1])]; kw = {x["prov"] + "_voice_" + x["lang"]: x["id"]}
+            if s.get("provider") != "both": kw["provider"] = x["prov"]
+        else:
+            kw = {"voice_" + p[1]: VOICES[p[1]][int(p[2])], "provider": "edge"}
+    except (IndexError, KeyError, ValueError):
+        return await q.answer("The list changed. Send /voices again.", show_alert=True)
+    clean = sanitize(kw)
+    if scope == "__global__": db.setdefault("global_settings", {}).update(clean); save()
+    else: put(scope, **clean)
+    await q.answer("Saved ✓")
+    try: await q.edit_message_reply_markup(voices_kb(cfg(scope)))
+    except Exception: pass
 
 async def panel_only_cmd(update, ctx):
     await say(update, "🔒 Voices can only be added, edited, deleted or selected from the Mini App panel (/panel).")
@@ -1197,17 +1235,67 @@ COMMANDS = [
     ("replay", "Replay your last voice"),
 ]
 
+STT_MAX = 40 * 1024 * 1024
+async def api_credits(req):
+    await need(req)
+    return web.json_response({"elevenlabs": await el_balance(force=True) if ELEVENLABS_API_KEY else {"error": "ELEVENLABS_API_KEY is not set"}})
+
+async def api_stt(req):
+    """Speech-to-text for audio or video files (approved admins): ElevenLabs Scribe or Cartesia ink-whisper."""
+    uid = await need(req)
+    prov = model = lang = ""; data = b""; fname = "audio"; ctype = "application/octet-stream"
+    async for part in await req.multipart():
+        if part.name == "file":
+            fname = part.filename or "audio"; ctype = part.headers.get("Content-Type", ctype); buf = bytearray()
+            while True:
+                ch = await part.read_chunk(1 << 20)
+                if not ch: break
+                buf += ch
+                if len(buf) > STT_MAX: raise web.HTTPRequestEntityTooLarge(max_size=STT_MAX, actual_size=len(buf))
+            data = bytes(buf)
+        elif part.name in ("provider", "model", "language"):
+            v = (await part.text())[:40]
+            if part.name == "provider": prov = v
+            elif part.name == "model": model = v
+            else: lang = v
+    if not data: raise web.HTTPBadRequest(text="No file received")
+    lang = lang if re.fullmatch(r"[a-z]{2,3}", lang or "") else ""
+    fd = aiohttp.FormData(); fd.add_field("file", data, filename=fname[:80], content_type=ctype)
+    if prov == "elevenlabs":
+        if not ELEVENLABS_API_KEY: raise web.HTTPBadRequest(text="ElevenLabs API key is not set")
+        model = model if model in MODELS["el_stt"] else "scribe_v2"; fd.add_field("model_id", model)
+        if lang: fd.add_field("language_code", lang)
+        url, hdr = "https://api.elevenlabs.io/v1/speech-to-text", {"xi-api-key": ELEVENLABS_API_KEY}
+    elif prov == "cartesia":
+        if not CARTESIA_API_KEY: raise web.HTTPBadRequest(text="Cartesia API key is not set")
+        model = "ink-whisper"; fd.add_field("model", model); fd.add_field("language", lang or "en")
+        url, hdr = "https://api.cartesia.ai/stt", {"Authorization": f"Bearer {CARTESIA_API_KEY}", "X-API-Key": CARTESIA_API_KEY, "Cartesia-Version": "2026-03-01"}
+    else:
+        raise web.HTTPBadRequest(text="Unknown provider")
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=300)) as ses:
+            async with ses.post(url, headers=hdr, data=fd) as r:
+                body = await r.text()
+                if r.status >= 400:
+                    k = classify(r.status, body)
+                    raise web.HTTPBadGateway(text=f"{PNAME.get(prov, prov)}: {KIND_TEXT.get(k, k)} - {body[:160]}")
+                j = json.loads(body)
+    except (aiohttp.ClientError, asyncio.TimeoutError, ValueError):
+        raise web.HTTPBadGateway(text="The speech service did not answer correctly")
+    audit(uid, f"Speech-to-text {prov}/{model} ({len(data) // 1024} KB)")
+    return web.json_response({"text": str(j.get("text", "")).strip(), "provider": prov, "model": model, "language": j.get("language_code") or j.get("language") or lang})
+
 async def post_init(app):
     load()
     app_ref["bot"] = app.bot
     await restore(app.bot)
     migrate(); save()
-    w = web.Application()
+    w = web.Application(client_max_size=STT_MAX + (2 << 20))
     w["bot"] = app.bot
     w.add_routes([web.get("/", health), web.get("/health", health), web.get("/app", page), web.get("/api/state", api_state),
                   web.post("/api/save", api_save), web.post("/api/voice", api_voice), web.post("/api/action", api_action),
                   web.post("/api/preview", api_preview), web.post("/api/request", api_request),
-                  web.post("/api/login", api_login), web.post("/api/creds", api_creds), web.post("/api/backup", api_backup), web.post("/api/logout", api_logout), web.post("/api/mfa", api_mfa), web.get("/api/export", api_export),
+                  web.post("/api/login", api_login), web.post("/api/creds", api_creds), web.post("/api/backup", api_backup), web.post("/api/logout", api_logout), web.post("/api/mfa", api_mfa), web.get("/api/export", api_export), web.get("/api/credits", api_credits), web.post("/api/stt", api_stt),
                   web.post("/api/admin", api_admin), web.get("/api/history", api_history),
                   web.post("/api/hist", api_hist), web.get("/api/histaudio", api_histaudio)])
     runner = web.AppRunner(w); await runner.setup()
@@ -1251,6 +1339,7 @@ def main():
     H(CommandHandler("deny", deny_cmd)); H(CommandHandler("admins", admins_cmd))
     H(CommandHandler("removeadmin", removeadmin_cmd)); H(CommandHandler("tts", tts_cmd))
     H(CallbackQueryHandler(cb_admin, pattern=r"^adm:(ok|no):\d+$"))
+    H(CallbackQueryHandler(cb_voice, pattern=r"^v[se]:"))
     H(MessageHandler(filters.ChatType.GROUPS & (filters.TEXT | filters.CAPTION) & ~filters.COMMAND, collect))
     app.add_error_handler(on_error)
     app.run_polling(allowed_updates=Update.ALL_TYPES, bootstrap_retries=-1)
