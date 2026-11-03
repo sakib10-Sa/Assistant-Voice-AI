@@ -8,7 +8,7 @@ Env (Render -> Environment): BOT_TOKEN, OWNER_IDS, WEBAPP_URL, DB_FILE,
 API keys are read from environment only and are never sent to the panel.
 """
 import asyncio, base64, hashlib, hmac, json, logging, os, re, secrets, time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import parse_qsl
 
@@ -663,10 +663,27 @@ async def need(req, owner=False):
 async def can_see(bot, uid, h):
     return uid in OWNERS or h.get("uid") == uid or (h["cid"] < 0 and await can_manage(bot, uid, h["cid"]))
 
-def stats_view(c):
-    st = c["stats"]; dl = st.get("daily", {})
-    days = [(d, *(dl.get(d, [0, 0]))) for d in sorted({*dl})[-7:]]
-    return {"voices": st["voices"], "chars": st["chars"], "prov": st.get("prov", {}), "daily": days}
+def agg_stats():
+    """Global dashboard = real totals summed over every group the bot serves."""
+    t = {"voices": 0, "chars": 0, "prov": {}, "daily": {}}
+    for k, c in db.get("chats", {}).items():
+        if k == "__global__": continue
+        st = c.get("stats", {}); t["voices"] += st.get("voices", 0); t["chars"] += st.get("chars", 0)
+        for p, n in st.get("prov", {}).items(): t["prov"][p] = t["prov"].get(p, 0) + n
+        for d, v in st.get("daily", {}).items(): x = t["daily"].setdefault(d, [0, 0]); x[0] += v[0]; x[1] += v[1]
+    return t
+
+def stats_view(c, cid=None):
+    """Always returns 7 consecutive days and 24 hourly buckets (zeros when idle) so the graph is never empty."""
+    st = c["stats"]; dl = st.get("daily", {}); now = time.time()
+    days = [(datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(6, -1, -1)]
+    hs, last = [0] * 24, 0
+    for h in db.get("history", []):
+        if cid is not None and str(h.get("cid")) != str(cid): continue
+        last = max(last, h["ts"]); age = now - h["ts"]
+        if 0 <= age < 86400: hs[23 - int(age // 3600)] += 1
+    return {"voices": st.get("voices", 0), "chars": st.get("chars", 0), "prov": st.get("prov", {}),
+            "daily": [(d, *(dl.get(d, [0, 0]))) for d in days], "hourly": hs, "last": last}
 
 async def api_state(req):
     uid, _ = auth(req)
@@ -679,10 +696,10 @@ async def api_state(req):
                      for p, v in pstat.items()}
     chats = [{"id": "__global__", "title": "Global defaults (all groups)",
               "s": base_cfg(),
-              "stats": stats_view({"stats": {"voices": 0, "chars": 0}}), "pending": 0}]
+              "stats": stats_view({"stats": agg_stats()}), "pending": sum(len(v) for v in buffers.values())}]
     for cid, c in db["chats"].items():
         if cid != "__global__" and await can_manage(req.app["bot"], uid, int(cid)):
-            chats.append({"id": cid, "title": c["title"], "s": cfg(cid), "stats": stats_view(c),
+            chats.append({"id": cid, "title": c["title"], "s": cfg(cid), "stats": stats_view(c, cid),
                           "pending": sum(len(v) for k, v in buffers.items() if str(k[0]) == cid)})
     out.update(chats=chats, voice_lib=lib(), voices=VOICES, providers=list(PROVIDERS), presets=list(PRESETS),
                login=next((n for n, v in db.get("creds", {}).items() if v["uid"] == uid), ""),

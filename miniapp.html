@@ -305,6 +305,59 @@ body.lg #mb,body.lg .drawer,body.lg #scrim{display:none}body.lg #m{padding-top:1
 .bar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;width:0;background:var(--ac);border-radius:3px;transition:width .3s var(--ease)}
 .fl{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:var(--fill);margin:8px 0;font-size:14px}.fl b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fl small{color:var(--mut)}
 textarea.big{min-height:130px;resize:vertical}audio{width:100%;margin-top:10px}
+/* ---- v15: polish, compact inputs, sheet, search, dashboard ---- */
+input[type=text],input[type=password],input[type=number],input[type=search],textarea,select{min-height:38px;padding:7px 12px;font-size:15px;border-radius:12px}
+textarea{min-height:76px}textarea.big{min-height:120px}.btn{min-height:40px}.btn.sm{min-height:34px}.nf{width:84px}
+.btn.plus{font-size:24px;line-height:1;width:44px;height:44px;min-height:44px;padding:0;display:grid;place-items:center;border-radius:14px;flex:none}
+.card{border-radius:24px;padding:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 12px 32px -20px rgba(0,0,0,.65)}
+html[data-th=light] .card{box-shadow:0 1px 2px rgba(0,0,0,.04),0 12px 28px -18px rgba(0,0,0,.18)}
+.bento{gap:12px}h4{font-size:11.5px;letter-spacing:.08em;margin:0 0 12px}.row{min-height:46px}.item{padding:10px 0}
+.sheet{z-index:40;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}#toast{z-index:50}
+.sheet .panel{max-height:min(86vh,calc(100% - 24px));overflow-y:auto;border-radius:26px;padding:18px 16px;margin-bottom:calc(10px + env(safe-area-inset-bottom));box-shadow:0 30px 70px -20px rgba(0,0,0,.65)}
+#scrim{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.topfade{position:fixed;left:0;right:0;top:0;height:calc(60px + env(safe-area-inset-top));z-index:19;pointer-events:none;background:linear-gradient(var(--bg),transparent)}
+#sr{position:fixed;z-index:22;left:62px;top:calc(8px + env(safe-area-inset-top));width:42px;height:42px;border-radius:50%;border:0;background:none;color:var(--tx);padding:0;display:grid;place-items:center}
+#sr svg{position:relative;width:20px;height:20px;transition:transform .4s cubic-bezier(.34,1.56,.64,1)}#sr.open svg{transform:scale(1.12) rotate(-8deg);color:var(--ac)}
+#sr .gl,#sq .gl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,calc(.07*var(--gi,1))),rgba(255,255,255,0) 60%),rgba(255,255,255,var(--gt,.12));-webkit-backdrop-filter:blur(var(--gb,8px)) saturate(150%);backdrop-filter:blur(var(--gb,8px)) saturate(150%);box-shadow:inset 0 1px 0 rgba(255,255,255,calc(.55*var(--gi,1))),inset 0 0 0 .5px rgba(255,255,255,calc(.28*var(--gi,1))),inset 0 0 20px rgba(255,255,255,calc(.1*var(--gi,1)))}
+#sq{position:fixed;z-index:22;left:112px;right:12px;top:calc(8px + env(safe-area-inset-top));height:42px;border-radius:21px;clip-path:inset(0 100% 0 0 round 21px);opacity:0;pointer-events:none;transition:clip-path .45s cubic-bezier(.32,.72,0,1),opacity .25s}
+#sq.open{clip-path:inset(0 0 0 0 round 21px);opacity:1;pointer-events:auto}
+#sq input{position:relative;width:100%;height:100%;border:0;background:none;color:var(--tx);padding:0 16px;font-size:15px;outline:0;min-height:0;border-radius:21px;box-shadow:none}
+html[data-th=light] #sr .gl,html[data-th=light] #sq .gl{background:rgba(255,255,255,calc(var(--gt,.12) + .45));box-shadow:inset 0 0 20px rgba(255,255,255,.55)}
+html.lite #sr .gl,html.lite #sq .gl{-webkit-backdrop-filter:none;backdrop-filter:none;background:#161618}html.lite[data-th=light] #sr .gl,html.lite[data-th=light] #sq .gl{background:#f2f2f7}
+body.lg #sr,body.lg #sq,body.lg .topfade{display:none}
+.gi{min-height:40px;padding:8px 12px;font-size:14px}.gd{width:8px;height:8px;border-radius:50%;background:var(--mut);flex:none;transition:background .25s,box-shadow .25s}.gi.on .gd{background:var(--ac);box-shadow:0 0 0 3px rgba(var(--acrgb),.25)}#dgrp{max-height:30vh;overflow-y:auto}
+.svc{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:10px}
+.sv{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:18px;background:var(--fill);border:.5px solid var(--hair)}
+.sv .si{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,rgba(var(--acrgb),.95),#5e5ce6)}.sv .si svg{width:19px;height:19px}
+.sv b{font-size:14px}.sv small{display:block;color:var(--mut);font-size:12px;margin-top:1px}
+.sv .tag{align-self:flex-start;display:inline-flex;align-items:center;gap:6px}.sv .tag:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.rg{display:flex;gap:2px;background:var(--fill);border-radius:10px;padding:2px}.rg button{border:0;background:none;color:var(--mut);font:inherit;font-size:12px;font-weight:600;padding:5px 11px;border-radius:8px;min-height:28px;transition:background .25s,color .25s}.rg button.on{background:var(--ac);color:#fff}
+.zc{font-size:12.5px;text-align:center;padding:0 6px 6px}.gr.zero .ln{stroke-dasharray:4 5;stroke-dashoffset:0;animation:none;opacity:.55}.gr.zero .ar{opacity:0;animation:none}.gr.zero .dt,.gr.zero .hl{display:none}
+/* ---- v16: crisp compact login ---- */
+.lwrap{max-width:340px;margin:4vh auto 0;perspective:none;animation:lin .5s var(--ease) both}
+.login{transform:none!important;transform-style:flat;will-change:auto;padding:18px 16px 14px;border-radius:24px;border:1px solid transparent;-webkit-backdrop-filter:none;backdrop-filter:none;
+background:linear-gradient(rgba(20,22,32,.92),rgba(20,22,32,.92)) padding-box,linear-gradient(140deg,rgba(255,255,255,.55),rgba(255,255,255,.08) 35%,rgba(120,150,255,.4) 70%,rgba(255,255,255,.3)) border-box;box-shadow:0 24px 50px -18px rgba(0,0,0,.75)}
+html[data-th=light] .login{background:linear-gradient(rgba(255,255,255,.94),rgba(255,255,255,.94)) padding-box,linear-gradient(140deg,#fff,rgba(120,150,255,.5) 60%,#fff) border-box}
+.login:before{display:none}.login .lock,.login .big,.login .btn,.login *{transform:none}
+.login .lock{width:44px;height:44px;border-radius:14px;margin:0 auto 8px}.login .lock svg{width:22px;height:22px}
+.login .big{font-size:18px;text-align:center;background:linear-gradient(90deg,#9db8ff,#c9a7ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.login .mut{font-size:12.5px;text-align:center}
+.login input{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);min-height:40px;box-shadow:none}
+html[data-th=light] .login input{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.08)}
+.login .btn{min-height:44px;border-radius:14px;touch-action:manipulation;transition:filter .2s,opacity .2s,scale .2s cubic-bezier(.34,1.56,.64,1)}.login .btn:active{scale:.98}
+.login>*{animation:none}.login .lock{animation:lin .5s var(--ease) both}.login .lerr.sh{animation:shk .42s}
+.foot{margin-top:12px}
+/* ---- v17: plain login checkbox, search button position option ---- */
+.login .ck{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--mut);padding:2px 0 12px;cursor:pointer;position:relative;-webkit-user-select:none;user-select:none}
+.login .ck input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.login .ck .bx{width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid rgba(255,255,255,.35);display:grid;place-items:center;transition:background .2s,border-color .2s,box-shadow .2s}
+.login .ck input:checked+.bx{background:var(--ac);border-color:var(--ac)}
+.login .ck .bx:after{content:"";width:9px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px);opacity:0;transition:opacity .15s}
+.login .ck input:checked+.bx:after{opacity:1}.login .ck input:focus-visible+.bx{box-shadow:0 0 0 3px rgba(var(--acrgb),.3)}
+html[data-th=light] .login .ck .bx{border-color:rgba(0,0,0,.3)}
+html[data-sp=right] #sr{left:auto;right:12px}
+html[data-sp=right] #sq{left:12px;right:62px;clip-path:inset(0 0 0 100% round 21px)}
+html[data-sp=right] #sq.open{clip-path:inset(0 0 0 0 round 21px)}
 </style></head>
 <body>
 <header id="hd" hidden><select id="chat"></select></header><div class="savebar" id="sb" hidden><span id="sv">Unsaved changes</span><button class="btn pri sm" onclick="saveNow()">Save</button></div>
@@ -335,16 +388,16 @@ async function load(keep){
 function loginView(pending){document.body.classList.add('lg');$('#hd').hidden=$('#nv').hidden=true;
   $('#m').innerHTML=`<div class="lwrap"><i class="orb o1"></i><i class="orb o2"></i><div class="card login"><div class="lock"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.5" r="1.2" fill="currentColor"/></svg></div><div class="big">Secure Login</div><div class="mut">Admin Control Panel</div>
   ${pending?'<div class="note">Your access is waiting for owner approval.</div>':''}
-  <label class="l" for="lu">Username</label><input type="text" id="lu" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="64" value="${esc(ls('vb_u')||'')}">
+  <label class="l" for="lu">Username</label><input type="text" id="lu" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="64" enterkeyhint="next" value="${esc(ls('vb_u')||'')}" oninput="if($('#lr').checked)ls('vb_u',this.value.trim().toLowerCase())">
   <label class="l" for="lp">Password</label><div class="pw"><input type="password" id="lp" autocomplete="current-password" maxlength="256" onkeydown="if(event.key=='Enter')doLogin()"><button type="button" onclick="pwShow(this)" aria-label="Show password"><svg class="e1" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="e2" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.5 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.2-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div>
   <div id="lcw" hidden><label class="l" for="lc">Authenticator code</label><input type="text" id="lc" inputmode="numeric" autocomplete="one-time-code" maxlength="8" onkeydown="if(event.key=='Enter')doLogin()"></div>
   <div id="le" class="lerr" role="alert" aria-live="polite"></div>
-  <div class="row" style="padding:0 0 10px"><span>Remember me</span><label class="sw"><input type="checkbox" id="lr" checked><i></i></label></div>
+  <label class="ck"><input type="checkbox" id="lr" ${ls('vb_rm')=='0'?'':'checked'} onchange="ls('vb_rm',this.checked?'1':'0');if(!this.checked)ls('vb_u',null);else ls('vb_u',$('#lu').value.trim().toLowerCase())"><span class="bx"></span>Remember me on this device</label>
   <button class="btn pri" id="lb" onclick="doLogin()">Log in</button>
   <div class="mut hint">Only approved admins can sign in. Ask the owner if you need access.</div></div><div class="foot">Panel by <b>@${OWNER_TAG}</b></div></div>`}
 function LE(t){const e=$('#le');if(!e)return;e.textContent=t;e.classList.remove('sh');void e.offsetWidth;e.classList.add('sh')}
 function pwShow(b){const i=$('#lp'),s=i.type=='password';i.type=s?'text':'password';b.classList.toggle('on',s);b.setAttribute('aria-label',s?'Hide password':'Show password')}
-async function doLogin(){const b=$('#lb');if(b.disabled)return;b.disabled=true;b.classList.add('ld');LE('');
+async function doLogin(){const b=$('#lb');if(!b||b.disabled||window.event&&window.event.repeat)return;b.disabled=true;b.classList.add('ld');LE('');
   try{await api('/api/login',{username:$('#lu').value,password:$('#lp').value,code:($('#lc')||{}).value||'',remember:$('#lr').checked});ls('vb_u',$('#lr').checked?$('#lu').value.trim().toLowerCase():null);$('#lp').value='';load()}
   catch(e){b.disabled=false;b.classList.remove('ld');
     if(e.message=='MFA_REQUIRED'){$('#lcw').hidden=false;$('#lc').focus();return LE('Enter the 6-digit code from your authenticator app.')}
@@ -353,7 +406,7 @@ async function doLogin(){const b=$('#lb');if(b.disabled)return;b.disabled=true;b
 function render(){
   navSync();
   const c=C();if(!c){$('#m').innerHTML='<div class="center"><div class="big">No groups yet</div><div class="mut">Add the bot to a group and send one message there. The group will then show up here. You must be an admin of that group.</div></div>'+(tab=='more'?V.more():'');return}
-  $('#m').innerHTML=(tab=='more'?'':scopeBar())+V[tab]();if(tab=='hist')loadHist()}
+  $('#m').innerHTML=V[tab]();if(tab=='hist')loadHist()}
 $('#chat').onchange=async e=>{await saveNow();cur=e.target.value;render()};
 
 function set(k,v,re){C().s[k]=v;mark(k);if(re)render()}
@@ -378,19 +431,19 @@ const keyTag=p=>!S.keys[p]?`<span class="tag">${PN[p]} · Not set</span>`:bad(p)
 const V={
 home(){const c=C(),st=c.stats,mx=Math.max(1,...st.daily.map(d=>d[1])),tp=Object.values(st.prov).reduce((a,b)=>a+b,0)||1;
  return `<div class="bento">${alerts()}
- <div class="card"><div class="big">${st.voices}</div><div class="mut">Voices</div></div>
- <div class="card"><div class="big">${st.chars>9999?(st.chars/1000).toFixed(1)+'k':st.chars}</div><div class="mut">Characters</div></div>
- <div class="card s2"><div class="row" style="padding:0"><div><b>Bot status</b><div class="mut">${c.pending} queued</div></div><label class="sw"><input type="checkbox" ${c.s.enabled?'checked':''} onchange="set('enabled',this.checked)"><i></i></label></div></div>
+ <div class="card"><div class="big" id="hv">${st.voices}</div><div class="mut">Voices</div></div>
+ <div class="card"><div class="big" id="hc">${fmtC(st.chars)}</div><div class="mut">Characters</div></div>
+ <div class="card s2"><div class="row" style="padding:0"><div><b>Bot status</b><div class="mut"><span id="hq">${c.pending}</span> queued</div></div><label class="sw"><input type="checkbox" ${c.s.enabled?'checked':''} onchange="set('enabled',this.checked)"><i></i></label></div></div>
  ${graph(st)}
  <div class="card s2"><h4>Providers used</h4>${Object.entries(st.prov).map(([k,n])=>`<div class="mut" style="display:flex;justify-content:space-between"><span>${esc(k)}</span><span>${n}</span></div><div class="pb"><b style="width:${n/tp*100}%"></b></div>`).join('')||'<span class="mut">No data yet</span>'}</div>
- <div class="card s4"><h4>Voice services</h4><div class="chips">${keyTag('cartesia')}${keyTag('elevenlabs')}<span class="tag ok">Edge TTS · Ready</span><span class="tag ${S.backup?'ok':''}">Backup ${S.backup?'On':'Off'}</span></div></div>
+ <div class="card s4"><h4>Voice services</h4><div class="svc">${svc('cartesia')}${svc('elevenlabs')}${svc('edge')}${svc('backup')}</div></div>
  <button class="btn pri" ${cur=='__global__'?'disabled':''} onclick="act('send')">Send now</button><button class="btn" ${cur=='__global__'?'disabled':''} onclick="act('clear')">Clear queue</button>${cur=='__global__'?'<div class="hint s4">Queue actions need a group. Pick one from the menu above.</div>':''}</div>
  <button class="btn s4" style="width:100%" onclick="load()">↻ Refresh</button>`},
 targets(){const c=C();return `<div class="bento"><div class="card s4"><div class="gs"><div><b>${c.s.only_listed?'Listed':'Everyone'}</b><span>Replies to</span></div><div><b>${c.s.default_timer}s</b><span>Default wait</span></div><div><b>${Object.keys(c.s.timers).length}</b><span>Listed</span></div><div><b>${c.s.ignore.length}</b><span>Ignored</span></div></div></div>
  <div class="card s4"><h4>Who gets voice replies</h4>
  ${tog('only_listed','Only reply to listed users')}${sld('default_timer','Wait before sending',1,120,'s')}</div>
  <div class="card s4"><h4>Listed users (wait time)</h4>${Object.entries(c.s.timers).map(([n,t])=>`<div class="item"><span class="av">${esc((n[0]||'?').toUpperCase())}</span><b class="t">@${esc(n)}</b><input type="number" min="1" style="width:76px" value="${t}" data-n="${esc(n)}" onchange="setT(this.dataset.n,this.value)"><button class="btn sm red" data-n="${esc(n)}" onclick="delT(this.dataset.n)">✕</button></div>`).join('')||'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M18 8v6M15 11h6"/></svg><b>No listed users</b><span>Add a username below. While "Only reply to listed users" is on, only they get voice replies.</span></div>'}
- <div class="item"><input type="text" id="nu" class="t" placeholder="@username" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="nf"><input type="number" id="ns" value="15" min="1" inputmode="numeric"><i>sec</i></div><button class="btn sm pri" onclick="addT()">＋</button></div></div>
+ <div class="item"><input type="text" id="nu" class="t" placeholder="@username" autocapitalize="none" autocorrect="off" spellcheck="false"><div class="nf"><input type="number" id="ns" value="15" min="1" inputmode="numeric"><i>sec</i></div><button class="btn sm pri plus" onclick="addT()">＋</button></div></div>
  <div class="card s4"><h4>Ignored users (comma separated)</h4><textarea rows="2" onchange="set('ignore',this.value.split(',').map(x=>x.trim().replace(/^@/,'')).filter(Boolean))">${esc(c.s.ignore.join(', '))}</textarea>${c.s.ignore.length?`<div class="chips" style="margin-top:10px">${c.s.ignore.map(n=>`<span class="tag">@${esc(n)}</span>`).join('')}</div><button class="btn sm ghost" style="margin-top:10px" onclick="set('ignore',[],1)">Clear all</button>`:'<div class="hint">Messages from these users are never voiced. Separate names with commas.</div>'}</div></div>`},
 voice(){const c=C(),s=c.s,P={normal:'Normal',deep:'Deep',robot:'Robot',child:'Child',deep_robot:'Deep Robot'},ids=[['cartesia','bn','Cartesia Bangla'],['cartesia','en','Cartesia English'],['elevenlabs','bn','ElevenLabs Bangla'],['elevenlabs','en','ElevenLabs English']];
  return `<div class="bento"><div class="card s4"><h4>Engine</h4>${sel('provider','Provider',S.providers.map(p=>[p,{both:'Auto (Cartesia, then ElevenLabs)',cartesia:'Cartesia',elevenlabs:'ElevenLabs',edge:'Edge TTS'}[p]]))}
@@ -415,6 +468,7 @@ more(){const c=C(),own=S.role=='owner';return `<div class="bento">${c?`<div clas
  <div class="card s4"><h4>Appearance</h4><div class="seg">${[['dark','Dark'],['light','Light'],['system','System Auto']].map(([v,t])=>`<button class="${PREF.th==v?'on':''}" onclick="setPref('th','${v}',event)">${t}</button>`).join('')}</div>
  <label class="l">Accent color</label><div class="sws">${ACC.map(([n,c])=>`<button style="background:rgb(${c});color:rgb(${c})" class="${PREF.ac==c?'on':''}" aria-label="${n}" onclick="setPref('ac','${c}')"></button>`).join('')}</div>
  <div class="act" style="align-items:center"><span class="mut">Look &amp; feel</span><button class="btn sm ghost" onclick="resetLook()">Reset appearance</button></div>
+ <label class="l">Search button</label><div class="seg two">${[['next','Next to menu'],['right','Top right']].map(([v,t])=>`<button class="${PREF.sp==v?'on':''}" onclick="setPref('sp','${v}')">${t}</button>`).join('')}</div>
  <label class="l">Bar layout</label><div class="seg two">${[['float','Floating glass'],['classic','Classic bar']].map(([v,t])=>`<button class="${PREF.nl==v?'on':''}" onclick="setPref('nl','${v}')">${t}</button>`).join('')}</div>
  <label class="l">Background</label><div class="seg">${[['default','Default'],['aurora','Aurora'],['plain','Plain']].map(([v,t])=>`<button class="${PREF.bg==v?'on':''}" onclick="setPref('bg','${v}')">${t}</button>`).join('')}</div>
  <label class="l">Text size <span class="val" id="g_ts">${PREF.ts}%</span></label><input type="range" min="90" max="120" step="5" value="${PREF.ts}" style="--p:${(PREF.ts-90)/30*100}%" oninput="sp(this);$('#g_ts').textContent=this.value+'%'" onchange="setPref('ts',+this.value)">
@@ -469,10 +523,10 @@ load();
 /* ---- v4 helpers ---- */
 const ACC=[['Blue','10,132,255'],['Purple','191,90,242'],['Pink','255,55,95'],['Orange','255,159,10'],['Green','48,209,88'],['Teal','100,210,255']];
 const nameOf=u=>(S.admins||[]).find(a=>a.uid==u)?.name||(u==S.uid?'You':'Owner');
-const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('vb_pref')||'{}')}catch(e){}return{th:p.th||'dark',ac:p.ac||'10,132,255',fx:!!p.fx,gb:p.v>=3?p.gb:8,gt:p.v>=3?p.gt:12,gi:p.v>=3?p.gi:100,sr:p.sr!==false,ig:p.ig!==false,gbd:p.gbd!==false,rf:p.v==4&&p.rf===true,ns:p.ns||'bubble',nl:p.nl||'float',bg:p.bg||'default',ts:p.ts||100,m3d:p.m3d!==false,hp:p.hp!==false,v:4}})();
+const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('vb_pref')||'{}')}catch(e){}return{th:p.th||'dark',ac:p.ac||'10,132,255',fx:!!p.fx,gb:p.v>=3?p.gb:8,gt:p.v>=3?p.gt:12,gi:p.v>=3?p.gi:100,sr:p.sr!==false,ig:p.ig!==false,gbd:p.gbd!==false,rf:p.v==4&&p.rf===true,ns:p.ns||'bubble',nl:p.nl||'float',sp:p.sp||'next',bg:p.bg||'default',ts:p.ts||100,m3d:p.m3d!==false,hp:p.hp!==false,v:4}})();
 const mq=window.matchMedia?matchMedia('(prefers-color-scheme: light)'):null;
 function applyPref(){const h=document.documentElement,l=PREF.th=='light'||(PREF.th=='system'&&mq&&mq.matches);h.dataset.th=l?'light':'dark';
-  h.style.setProperty('--ac','rgb('+PREF.ac+')');h.style.setProperty('--acrgb',PREF.ac);h.classList.toggle('lite',PREF.fx);h.style.setProperty('--gb',PREF.gb+'px');h.style.setProperty('--gt',PREF.gt/100);h.style.setProperty('--gi',PREF.gi/100);h.classList.toggle('no-sr',!PREF.sr);h.classList.toggle('no-ig',!PREF.ig);h.classList.toggle('no-gb',!PREF.gbd);h.dataset.ns=PREF.ns;h.dataset.nl=PREF.nl;h.dataset.bg=PREF.bg;h.style.setProperty('--ts',PREF.ts/100);h.classList.toggle('no3d',!PREF.m3d||PREF.fx);
+  h.style.setProperty('--ac','rgb('+PREF.ac+')');h.style.setProperty('--acrgb',PREF.ac);h.classList.toggle('lite',PREF.fx);h.style.setProperty('--gb',PREF.gb+'px');h.style.setProperty('--gt',PREF.gt/100);h.style.setProperty('--gi',PREF.gi/100);h.classList.toggle('no-sr',!PREF.sr);h.classList.toggle('no-ig',!PREF.ig);h.classList.toggle('no-gb',!PREF.gbd);h.dataset.ns=PREF.ns;h.dataset.nl=PREF.nl;h.dataset.sp=PREF.sp;h.dataset.bg=PREF.bg;h.style.setProperty('--ts',PREF.ts/100);h.classList.toggle('no3d',!PREF.m3d||PREF.fx);
   const t=document.querySelector('meta[name=theme-color]');if(t)t.content=l?'#f2f2f7':'#000000';try{tg.setHeaderColor&&tg.setHeaderColor(l?'#f2f2f7':'#000000');tg.setBackgroundColor&&tg.setBackgroundColor(l?'#f2f2f7':'#000000')}catch(e){}}
 function persist(){try{localStorage.setItem('vb_pref',JSON.stringify(PREF))}catch(e){}}
 const RM=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -496,17 +550,24 @@ function movePill(){const n=$('#nv'),p=n.querySelector('.pill'),b=n.querySelecto
     p.animate([{transform:`translateX(${px}px) scale(1,1)`},{transform:`translateX(${(px+x)/2}px) scale(${st+.08},${1-(st-1)*.3}) rotateY(${(x>px?1:-1)*18}deg)`,offset:.4},{transform:`translateX(${x}px) scale(.96,1.05)`,offset:.72},{transform:`translateX(${x}px) scale(1,1)`}],{duration:560,easing:'cubic-bezier(.3,1.25,.5,1)'})}
   px=x}
 addEventListener('resize',()=>{px=null;movePill()});
-function graph(st){const d=st.daily||[],W=320,H=110,L=8,R=8,T=14,B=22;if(!d.length)return `<div class="card s4"><div class="act"><h4>Bot activity</h4><span class="live"><i></i>Live</span></div><div class="mut" style="padding:26px 0;text-align:center">No activity yet. Voices will appear here.</div></div>`;
-  const v=d.map(x=>x[1]),mx=Math.max(1,...v),n=d.length,X=i=>L+(n==1?(W-L-R)/2:i*(W-L-R)/(n-1)),Y=y=>T+(H-T-B)*(1-y/mx);
+let GR='24h',LTB=0;const fmtC=n=>n>9999?(n/1000).toFixed(1)+'k':n;
+const ago=t=>{const s=Math.max(0,Date.now()/1000-t);return s<60?'just now':s<3600?Math.floor(s/60)+'m ago':s<86400?Math.floor(s/3600)+'h ago':new Date(t*1000).toLocaleDateString([],{day:'numeric',month:'short'})};
+function graph(st){const H=GR=='24h',v=H?(st.hourly||Array(24).fill(0)):(st.daily||[]).map(d=>d[1]);if(!v.length)v.push(0,0);
+  const W=320,Hh=120,L=8,R=8,T=14,B=22,n=v.length,mx=Math.max(1,...v),tot=v.reduce((a,b)=>a+b,0),zero=tot==0,X=i=>L+i*(W-L-R)/Math.max(1,n-1),Y=y=>T+(Hh-T-B)*(1-y/mx);
   let p=`M${X(0)},${Y(v[0])}`;for(let i=1;i<n;i++){const cx=(X(i-1)+X(i))/2;p+=` C${cx},${Y(v[i-1])} ${cx},${Y(v[i])} ${X(i)},${Y(v[i])}`}
-  const a=p+` L${X(n-1)},${H-B} L${X(0)},${H-B} Z`,tot=v.reduce((a,b)=>a+b,0),pk=Math.max(...v),td=new Date().toISOString().slice(0,10),today=d.filter(x=>x[0]==td).reduce((a,b)=>a+b[1],0);
-  return `<div class="card s4"><div class="act"><h4>Bot activity</h4><span class="live"><i></i>Live</span></div>
-  <svg class="gr ${LR?'static':''}" viewBox="0 0 ${W} ${H}"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--ac)" stop-opacity=".42"/><stop offset="1" stop-color="var(--ac)" stop-opacity="0"/></linearGradient></defs>
-  ${[0,.5,1].map(f=>`<line x1="${L}" x2="${W-R}" y1="${T+(H-T-B)*f}" y2="${T+(H-T-B)*f}" stroke="var(--line)" stroke-width=".6"/>`).join('')}
-  <path class="ar" d="${a}"/><path class="ln" pathLength="1" d="${p}"/>${v.map((y,i)=>`<circle class="dt" cx="${X(i)}" cy="${Y(y)}" r="2.6"/>`).join('')}<circle class="hl" cx="${X(n-1)}" cy="${Y(v[n-1])}" r="4"/>
-  ${d.map((x,i)=>`<text x="${X(i)}" y="${H-6}" text-anchor="middle">${x[0].slice(8)}</text>`).join('')}</svg>
-  <div class="gs"><div><b>${today}</b><span>Today</span></div><div><b>${tot}</b><span>${n}-day total</span></div><div><b>${pk}</b><span>Peak day</span></div><div><b>${(tot/n).toFixed(1)}</b><span>Daily avg</span></div></div></div>`}
-setInterval(()=>{if(tab=='home'&&!document.hidden&&S.role&&!Object.keys(D[cur]||{}).length){LR=1;load().finally(()=>LR=0)}},20000);
+  const a=p+` L${X(n-1)},${Hh-B} L${X(0)},${Hh-B} Z`,pk=Math.max(...v),lab=i=>H?(i%6==5||i==0?new Date(Date.now()-(n-1-i)*36e5).getHours()+'h':''):(st.daily[i][0].slice(8));
+  return `<div class="card s4" id="act"><div class="act" style="align-items:center"><h4 style="margin:0">Bot activity</h4><div class="rg">${['24h','7d'].map(r=>`<button class="${GR==r?'on':''}" onclick="setGR('${r}')">${r}</button>`).join('')}</div></div>
+  <div class="act" style="align-items:center;margin:8px 0 2px"><span class="live"><i></i>Live</span><span class="mut" id="upd">Updated ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></div>
+  <svg class="gr ${LR?'static':''} ${zero?'zero':''}" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Bot activity graph"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--ac)" stop-opacity=".42"/><stop offset="1" stop-color="var(--ac)" stop-opacity="0"/></linearGradient></defs>
+  ${[0,.5,1].map(f=>`<line x1="${L}" x2="${W-R}" y1="${T+(Hh-T-B)*f}" y2="${T+(Hh-T-B)*f}" stroke="var(--line)" stroke-width=".6"/>`).join('')}
+  <path class="ar" d="${a}"/><path class="ln" ${zero?'':'pathLength="1"'} d="${p}"/>${zero?'':v.map((y,i)=>`<circle class="dt" cx="${X(i)}" cy="${Y(y)}" r="2.6"/>`).join('')}${zero?'':`<circle class="hl" cx="${X(n-1)}" cy="${Y(v[n-1])}" r="4"/>`}
+  ${v.map((_,i)=>lab(i)?`<text x="${X(i)}" y="${Hh-6}" text-anchor="middle">${lab(i)}</text>`:'').join('')}</svg>
+  ${zero?`<div class="mut zc">No voices in the last ${H?'24 hours':'7 days'}. This graph updates live when the bot speaks.</div>`:''}
+  <div class="gs"><div><b>${tot}</b><span>${H?'Last 24h':'7 days'}</span></div><div><b>${pk}</b><span>Peak ${H?'hour':'day'}</span></div><div><b>${(tot/n).toFixed(1)}</b><span>Avg / ${H?'hour':'day'}</span></div><div><b style="font-size:14px">${st.last?ago(st.last):'None yet'}</b><span>Last voice</span></div></div></div>`}
+function setGR(r){GR=r;const e=$('#act'),c=C();if(e&&c){LR=0;e.outerHTML=graph(c.stats)}}
+async function liveTick(){if(tab!='home'||document.hidden||!S.role||LTB||Object.keys(D[cur]||{}).length)return;LTB=1;
+  try{const j=await api('/api/state');if(j.role&&tab=='home'){S=j;const c=C(),e=$('#act');if(c&&e){LR=1;e.outerHTML=graph(c.stats);LR=0;const up=(i,t)=>{const x=$('#'+i);if(x&&x.textContent!=t)x.textContent=t};up('hv',c.stats.voices);up('hc',fmtC(c.stats.chars));up('hq',c.pending)}}}catch(e){}LTB=0}
+setInterval(liveTick,15000);
 
 /* ---- v5 helpers ---- */
 function addAdmin(){$('#sh').innerHTML=`<div class="panel"><h4>Add admin</h4><div class="g"><label class="l" for="aid">Telegram ID</label><input type="text" id="aid" inputmode="numeric" autocomplete="off" placeholder="e.g. 123456789"><div class="hint">They can send /start to @userinfobot to see their numeric ID.</div><label class="l" for="an" style="margin-top:8px">Name (optional)</label><input type="text" id="an" maxlength="40"><div class="row" style="padding:8px 0 0"><span>Also create browser login</span><label class="sw"><input type="checkbox" id="ac" onchange="$('#acw').hidden=!this.checked"><i></i></label></div><div id="acw" hidden><label class="l" for="au2">Username</label><input type="text" id="au2" autocapitalize="none" autocorrect="off" spellcheck="false"><label class="l" for="ap2" style="margin-top:8px">Password (6+ characters)</label><input type="password" id="ap2" autocomplete="new-password"></div></div><br><div class="g g2"><button class="btn" onclick="vClose()">Cancel</button><button class="btn pri" onclick="doAddAdmin()">Add admin</button></div></div>`;$('#sh').hidden=false}
@@ -522,7 +583,7 @@ document.addEventListener('pointerdown',e=>{const t=e.target.closest('.btn,.seg 
   p.style.cssText=`width:${s}px;height:${s}px;left:${e.clientX-r.left-s/2}px;top:${e.clientY-r.top-s/2}px`;t.appendChild(p);setTimeout(()=>p.remove(),600)},{passive:true});
 let lastSel=0;document.addEventListener('input',e=>{if(e.target.type=='range'&&Date.now()-lastSel>60){lastSel=Date.now();hap('sel')}},{passive:true});
 const TI=['home','targets','voice','hist','more'];let NEWTAB=0,PT=tab;
-const _render=render;render=function(){_render();if(NEWTAB){NEWTAB=0;stagger()}countUps();moreExtras();menuSync()};
+const _render=render;render=function(){_render();if(NEWTAB){NEWTAB=0;stagger();msReset()}countUps();moreExtras();menuSync();if(MSQ)msFilter(MSQ)};
 const _goTab=goTab;goTab=function(k){if(k==tab)return;document.documentElement.style.setProperty('--dir',TI.indexOf(k)>TI.indexOf(tab)?1:-1);NEWTAB=1;$('#m').scrollTop=0;_goTab(k)};
 function stagger(){if(PREF.fx||RM())return;const m=$('#m');m.classList.remove('stg');[...m.querySelectorAll(':scope>.card,:scope>.bento>.card')].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,9)));void m.offsetWidth;m.classList.add('stg');setTimeout(()=>m.classList.remove('stg'),900)}
 function countUps(){if(LR||PREF.fx||RM()||tab!='home')return;document.querySelectorAll('#m .big,#m .gs b').forEach(el=>{const t=el.textContent.trim(),k=/k$/.test(t),n=parseFloat(t);if(!isFinite(n)||!/^\d+(\.\d+)?k?$/.test(t))return;
@@ -567,14 +628,13 @@ document.addEventListener('pointerdown',e=>{if(PREF.fx||RM()||!PREF.m3d)return;c
   const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.classList.add('tilt');
   c.style.transform=`perspective(900px) rotateX(${(-y*7).toFixed(2)}deg) rotateY(${(x*9).toFixed(2)}deg) scale(.985)`;TL=c},{passive:true});
 ['pointerup','pointercancel'].forEach(t=>document.addEventListener(t,()=>{if(TL){TL.classList.remove('tilt');TL.style.transform='';TL=null}},{passive:true}));
-function loginTilt(rx,ry,fast){const c=document.querySelector('.login');if(!c||PREF.fx||RM()||!PREF.m3d||(document.activeElement&&document.activeElement.tagName=='INPUT'))return;
+function loginTilt(){return}function _oldTilt(rx,ry,fast){const c=document.querySelector('.login');if(!c||PREF.fx||RM()||!PREF.m3d||(document.activeElement&&document.activeElement.tagName=='INPUT'))return;
   cancelAnimationFrame(LT);LT=requestAnimationFrame(()=>{c.style.transition=fast?'transform .12s linear':'';c.style.transform=`rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`})}
-document.addEventListener('pointermove',e=>{const c=document.querySelector('.login');if(!c)return;const r=c.getBoundingClientRect();
-  loginTilt(-(e.clientY-(r.top+r.height/2))/innerHeight*16,(e.clientX-(r.left+r.width/2))/innerWidth*20,1)},{passive:true});
-['pointerup','pointerleave'].forEach(t=>document.addEventListener(t,()=>loginTilt(0,0,0),{passive:true}));
-addEventListener('deviceorientation',e=>{if(e.gamma==null||!document.querySelector('.login'))return;loginTilt(Math.max(-9,Math.min(9,-(e.beta-50)/6)),Math.max(-11,Math.min(11,e.gamma/5)),1)},{passive:true});
+
+
+
 function msFilter(v){MSQ=v.trim().toLowerCase();document.querySelectorAll('#m .card').forEach(c=>{c.hidden=!!MSQ&&!c.textContent.toLowerCase().includes(MSQ)})}
-function moreExtras(){if(tab!='more')return;const m=$('#m');if(!$('#ms'))m.insertAdjacentHTML('afterbegin',`<input type="search" id="ms" class="srch" placeholder="Search settings" value="${esc(MSQ)}" oninput="msFilter(this.value)" autocomplete="off">`);
+function moreExtras(){if(tab!='more')return;const m=$('#m');
   if(!$('#dg')){const cs=n=>{try{return CSS.supports('backdrop-filter',n)}catch(e){return false}},R=[['App version','v13'],['Screen',`${innerWidth}×${innerHeight} @${devicePixelRatio}x`],['Telegram',`${tg.platform||'web'} ${tg.version||''}`],['Glass blur',cs('blur(1px)')?'Supported':'Not supported'],['Edge refraction',RFOK?(PREF.rf?'On':'Available'):'Unavailable'],['3D motion',PREF.m3d&&!PREF.fx&&!RM()?'On':'Off'],['Layout',PREF.nl=='classic'?'Classic bar':'Floating glass']];
     m.insertAdjacentHTML('beforeend',`<div class="card s4" id="dg"><h4>Diagnostics</h4><div class="kv">${R.map(([a,b])=>`<span>${a}</span><b>${esc(b)}</b>`).join('')}</div><button class="btn sm ghost" onclick="fpsTest()">Run frame test</button><div id="fr" class="res">Measures your screen's refresh rate and dropped frames for 2 seconds. Scroll while it runs for a realistic result.</div></div>`)}
   if(MSQ)msFilter(MSQ)}
@@ -583,17 +643,19 @@ function fpsTest(){const o=$('#fr'),t=[];o.className='res';o.textContent='Measur
     o.className='res '+(drop>t.length*.08?'bad':'ok');o.textContent=`≈${Math.round(1000/med)} Hz screen · ${(1000/avg).toFixed(0)} fps average · worst frame ${s[s.length-1].toFixed(0)} ms · ${drop} dropped of ${t.length}`}})(last)}
 
 /* ---- v13b: reset appearance, Escape closes popups ---- */
-function resetLook(){ask('Reset theme, accent, glass, layout, background and motion to defaults on this device?',()=>{Object.assign(PREF,{th:'dark',ac:'10,132,255',fx:false,gb:8,gt:12,gi:100,sr:true,ig:true,gbd:true,rf:false,ns:'bubble',nl:'float',bg:'default',ts:100,m3d:true,hp:true,v:4});persist();applyPref();render();requestAnimationFrame(()=>{px=null;movePill()});toast('Appearance reset')})}
+function resetLook(){ask('Reset theme, accent, glass, layout, background and motion to defaults on this device?',()=>{Object.assign(PREF,{th:'dark',ac:'10,132,255',fx:false,gb:8,gt:12,gi:100,sr:true,ig:true,gbd:true,rf:false,ns:'bubble',nl:'float',sp:'next',bg:'default',ts:100,m3d:true,hp:true,v:4});persist();applyPref();render();requestAnimationFrame(()=>{px=null;movePill()});toast('Appearance reset')})}
 addEventListener('keydown',e=>{if(e.key=='Escape'&&!$('#sh').hidden)vClose()});
 
 /* ---- v14: sidebar menu + TTS / STT sections ---- */
 const IC={"tts": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 10v4h3l5 4V6L7 10H4z\"/><path d=\"M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11\"/></svg>", "stt": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21\"/><path d=\"M3 5h2M19 5h2M2 8h2M20 8h2\"/></svg>", "vsel": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"8\" r=\"3.6\"/><path d=\"M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6\"/><path d=\"M19 4v4M17 6h4\"/></svg>"};
-const DI=[['hdr','Studio'],['tts','Text to Speech'],['stt','Speech to Text'],['vsel','Voices & IDs'],['sp'],['hdr','Navigate'],['home','Home'],['targets','Targets'],['voice','Voice engine'],['hist','History'],['more','Settings']];
+const DI=[['grp'],['sp'],['hdr','Studio'],['tts','Text to Speech'],['stt','Speech to Text'],['vsel','Voices & IDs'],['sp'],['hdr','Navigate'],['home','Home'],['targets','Targets'],['voice','Voice engine'],['hist','History'],['more','Settings']];
 (function(){const ic=k=>IC[k]||(TABS.find(t=>t[0]==k)||[])[1]||'';
-  document.body.insertAdjacentHTML('beforeend',`<div id="scrim" onclick="menu(0)"></div><aside class="drawer" id="dr" aria-label="Menu"><i class="gl"></i><div class="dl">${DI.map(([k,l])=>k=='hdr'?`<div class="dh">${l}</div>`:k=='sp'?'<div class="dsp"></div>':`<button class="di" data-k="${k}" onclick="menuGo('${k}')">${ic(k)}<span>${l}</span></button>`).join('')}</div></aside><button id="mb" onclick="menu()" aria-label="Menu" aria-expanded="false"><i class="gl"></i><span></span><span></span><span></span></button>`)})();
+  document.body.insertAdjacentHTML('beforeend',`<div id="scrim" onclick="menu(0)"></div><aside class="drawer" id="dr" aria-label="Menu"><i class="gl"></i><div class="dl">${DI.map(([k,l])=>k=='grp'?'<div class="dh">Editing group</div><div id="dgrp"></div>':k=='hdr'?`<div class="dh">${l}</div>`:k=='sp'?'<div class="dsp"></div>':`<button class="di" data-k="${k}" onclick="menuGo('${k}')">${ic(k)}<span>${l}</span></button>`).join('')}</div></aside><button id="mb" onclick="menu()" aria-label="Menu" aria-expanded="false"><i class="gl"></i><span></span><span></span><span></span></button>`)})();
 function menu(o){const d=$('#dr'),on=o==null?!d.classList.contains('open'):!!o;d.classList.toggle('open',on);$('#scrim').classList.toggle('on',on);const b=$('#mb');b.classList.toggle('open',on);b.setAttribute('aria-expanded',on);hap('light')}
 function menuGo(k){menu(0);goTab(k)}
-function menuSync(){document.querySelectorAll('.di').forEach(b=>b.classList.toggle('on',b.dataset.k==tab))}
+let GSIG='';function menuSync(){document.querySelectorAll('.di[data-k]').forEach(b=>b.classList.toggle('on',b.dataset.k==tab));
+  const sg=JSON.stringify([cur,(S.chats||[]).map(c=>[c.id,c.title])]);if(sg!=GSIG&&$('#dgrp')){GSIG=sg;$('#dgrp').innerHTML=(S.chats||[]).map(c=>`<button class="di gi ${c.id==cur?'on':''}" onclick="menuPick('${c.id}')"><i class="gd"></i><span>${esc(c.title||c.id)}</span></button>`).join('')||'<div class="mut" style="padding:6px 12px">No groups yet</div>'}}
+function menuPick(id){menu(0);pickChat(id)}
 addEventListener('keydown',e=>{if(e.key=='Escape')menu(0)});
 const _vv=V.voice,isVC=c=>/voice library|edge voices/i.test((c.querySelector('h4')||{}).textContent||'');
 V.voice=function(){const t=document.createElement('template');t.innerHTML=_vv();t.content.querySelectorAll('.card').forEach(c=>{if(isVC(c))c.remove()});return t.innerHTML};
@@ -643,4 +705,17 @@ function sttRun(){if(ST.busy)return;if(!ST.file)return toast('Choose a file firs
   x.onerror=()=>{ST.busy=0;$('#sg').disabled=false;sttUI('Network error',0,1)};x.send(fd)}
 async function sttCopy(){try{await navigator.clipboard.writeText(ST.text);toast('Copied ✓')}catch(e){const t=$('#so');t.select();document.execCommand('copy');toast('Copied ✓')}}
 function sttSave(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ST.text],{type:'text/plain'}));a.download='transcript.txt';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+
+/* ---- v15: services, global search button, top fade ---- */
+const SVI={cartesia:'<path d="M3 12h2M7 7v10M11 4v16M15 8v8M19 10v4"/>',elevenlabs:'<path d="M8 4v16M16 4v16"/>',edge:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/>',backup:'<path d="M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9.5 4.3 4.3 0 0 1 17 18H7z"/><path d="M12 11v5M9.5 13.5 12 11l2.5 2.5"/>'};
+function svc(p){let n,cap,st,cl;if(p=='backup'){n='Backup';cap='Telegram file';st=S.backup?'On':'Off';cl=S.backup?'ok':''}else if(p=='edge'){n='Edge TTS';cap='Free · speech';st='Ready';cl='ok'}
+  else{n=PN[p];cap='Speech · transcription';if(!S.keys[p]){st='Not set';cl=''}else if(bad(p)){st=SHORT[S.status[p].kind]||'Error';cl='bad'}else{st='Ready';cl='ok'}}
+  return `<div class="sv"><span class="si"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${SVI[p]}</svg></span><div><b>${n}</b><small>${cap}</small></div><span class="tag ${cl}">${st}</span></div>`}
+document.body.insertAdjacentHTML('beforeend','<div class="topfade"></div><button id="sr" onclick="srToggle()" aria-label="Search"><i class="gl"></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button><div id="sq"><i class="gl"></i><input id="si" type="search" placeholder="Search this page" oninput="msFilter(this.value)" autocomplete="off"></div>');
+function srToggle(o){const q=$('#sq'),on=o==null?!q.classList.contains('open'):!!o;q.classList.toggle('open',on);$('#sr').classList.toggle('open',on);hap('light');if(on)setTimeout(()=>$('#si').focus(),160);else{$('#si').value='';msFilter('')}}
+function msReset(){MSQ='';const i=$('#si');if(i)i.value=''}
+addEventListener('keydown',e=>{if(e.key=='Escape')srToggle(0)});
+
+/* ---- v16: focus the password when the username is remembered ---- */
+new MutationObserver(()=>{const u=$('#lu'),p=$('#lp');if(u&&p&&!u.dataset.f){u.dataset.f=1;if(u.value)setTimeout(()=>p.focus({preventScroll:true}),400)}}).observe($('#m'),{childList:true});
 </script></body></html>
