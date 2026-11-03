@@ -209,7 +209,10 @@ def clean_lib(v):
         if not re.fullmatch(r"[0-9a-f]{8}", k) or k in seen:
             k = secrets.token_hex(4)
         if n and p in ("cartesia", "elevenlabs") and l in ("bn", "en") and ID_RE.match(i):
-            seen.add(k); out.append({"k": k, "name": n, "prov": p, "lang": l, "id": i})
+            acc = str(x.get("access", "admin")); acc = acc if acc in ("admin", "selected", "premium", "public") else "admin"
+            allow = [int(u) for u in x.get("allow", []) if str(u).lstrip("-").isdigit()][:50]
+            seen.add(k); out.append({"k": k, "name": n, "prov": p, "lang": l, "id": i, "access": acc, "visible": bool(x.get("visible", True)),
+                                     "enabled": bool(x.get("enabled", True)), "model": str(x.get("model", ""))[:60], "allow": allow})
     return out[:100]
 
 def sanitize(s: dict) -> dict:
@@ -330,7 +333,7 @@ app_ref: dict = {}
 class TTSError(RuntimeError):
     def __init__(self, provider, kind, detail=""):
         self.provider, self.kind, self.detail = provider, kind, detail
-        extra = f" ({detail})" if kind == "config" and detail else ""
+        extra = f" ({detail[:160]})" if detail else ""
         super().__init__(f"{PNAME.get(provider, provider)}: {KIND_TEXT.get(kind, kind)}{extra}")
 
 
@@ -363,6 +366,43 @@ def classify(status, body):
     return "other"
 
 
+async def notify_owners(key, text, cooldown=3600):
+    if time.time() - notified.get(key, 0) < cooldown or not app_ref.get("bot"):
+        return
+    notified[key] = time.time()
+    for o in OWNERS:
+        try: await app_ref["bot"].send_message(o, text[:800])
+        except Exception: pass
+
+
+def note_ok(p):
+    st = pstat.get(p)
+    if st is None:
+        return
+    was_bad = st["ok"] is False
+    st.update(ok=True, kind="", msg="", ts=time.time())
+    if was_bad:
+        asyncio.create_task(notify_owners((p, "recovered"), f"✅ {PNAME[p]} is working again.", 0))
+
+
+def note_failure(p, e):
+    st = pstat.get(p)
+    if st is not None:
+        st.update(ok=False, kind=e.kind, msg=KIND_TEXT.get(e.kind, ""), ts=time.time())
+    text = f"⚠️ {PNAME.get(p, p)} problem: {KIND_TEXT.get(e.kind, e.kind)}\nFix: {KIND_FIX.get(e.kind, '')}"
+    if e.detail:
+        text += f"\nDetails: {e.detail[:200]}"
+    asyncio.create_task(notify_owners((p, e.kind), text, 900 if e.kind in ("server", "rate") else 3600))
+
+
+def user_error(exc, uid):
+    if isinstance(exc, TTSFailure):
+        if is_staff(uid):
+            return f"⚠️ Voice could not be created.\n{exc}\nOpen the panel (Home) for the fix."
+        return "⚠️ The voice service is temporarily unavailable. The owner has been notified."
+    return "⚠️ Voice could not be created. Please try again in a moment."
+
+
 async def post_audio(provider, url, headers, payload):
     try:
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=90)) as ses:
@@ -385,7 +425,7 @@ async def cartesia_tts(text, s, lang):
         raise TTSError("cartesia", "config", f"no {lang} voice selected: Voice > Voice library > Use, then Save")
     rate = max(0.6, min(1.5, 1.0 + float(s.get("rate", 0)) / 200))
     volume = max(0.5, min(2.0, 1.0 + float(s.get("volume", 0)) / 50))
-    mdl = s.get("ca_tts_model") or "sonic-3.6"
+    mdl = next((v["model"] for v in lib() if v["id"] == voice_id and v.get("model")), "") or s.get("ca_tts_model") or "sonic-3.6"
     payload = {
         "model_id": mdl,
         "transcript": text,
@@ -422,7 +462,7 @@ async def elevenlabs_tts(text, s, lang):
     if not voice_id:
         raise TTSError("elevenlabs", "config", f"no {lang} voice selected: Voice > Voice library > Use, then Save")
     speed = max(0.7, min(1.2, 1.0 + float(s.get("rate", 0)) / 250))
-    mdl = s.get("el_tts_model") or "eleven_multilingual_v2"
+    mdl = next((v["model"] for v in lib() if v["id"] == voice_id and v.get("model")), "") or s.get("el_tts_model") or "eleven_multilingual_v2"
     payload = {"text": text, "model_id": mdl,
                "voice_settings": {"stability": int(s.get("el_stability", 50)) / 100, "similarity_boost": int(s.get("el_similarity", 75)) / 100, "speed": speed}}
     if mdl == "eleven_v3": payload.pop("voice_settings")  # v3 ignores speed/similarity
@@ -578,6 +618,33 @@ def role_of(uid):
 
 def is_staff(uid): return role_of(uid) in ("owner", "admin")
 
+PERMS = ["elevenlabs", "cartesia", "voice_refs", "voice_edit", "voice_create", "premium", "providers"]
+TIERS = {"basic": [], "advanced": ["elevenlabs", "cartesia", "voice_refs", "voice_edit", "voice_create", "premium"]}
+
+def has_perm(uid, p):
+    """Server-side permission check. Owners have everything; admins get their tier's list or their custom list."""
+    if uid in OWNERS: return True
+    a = db.get("admins", {}).get(str(uid))
+    if a is None: return False
+    t = a.get("tier") or "advanced"  # admins created before tiers existed keep their old access
+    return p in (a.get("perms", []) if t == "custom" else TIERS.get(t, []))
+
+def can_use_voice(uid, v):
+    if uid in OWNERS: return True
+    if not v.get("enabled", True): return False
+    if uid in v.get("allow", []): return True  # explicitly authorised: reference-only admins can use only these
+    a = v.get("access", "admin")
+    if a == "public": return True
+    if a == "premium": return has_perm(uid, "premium")
+    if a == "admin": return has_perm(uid, v["prov"]) and has_perm(uid, "voice_refs")
+    return False
+
+def can_manage_voice(uid, v):
+    return uid in OWNERS or (has_perm(uid, "voice_edit") and has_perm(uid, v["prov"]))
+
+def lib_for(uid):
+    return [x for x in lib() if can_manage_voice(uid, x) or can_use_voice(uid, x)]
+
 async def can_manage(bot, uid, cid):
     if uid in OWNERS: return True
     if not is_staff(uid): return False
@@ -690,6 +757,8 @@ async def api_state(req):
     if uid is None: raise web.HTTPUnauthorized(text="login required")
     r = role_of(uid)
     out = {"role": r, "uid": uid, "in_tg": bool(req.headers.get("X-Init")), "models": MODELS}
+    out.update(perms=[p for p in PERMS if has_perm(uid, p)], prefs=db.get("prefs", {}).get(str(uid)), primary=primary(), edge=ALL_EDGE)
+    if uid in OWNERS: out["cmds"] = {"list": CMD_LIST, "cfg": db.get("cmdcfg", {})}
     if r not in ("owner", "admin"): return web.json_response(out)
     out["keys"] = {"cartesia": bool(CARTESIA_API_KEY), "elevenlabs": bool(ELEVENLABS_API_KEY)}
     out["status"] = {p: {"ok": None if (v["ok"] is False and time.time() - v["ts"] > 1800) else v["ok"], "kind": v["kind"]}
@@ -701,7 +770,7 @@ async def api_state(req):
         if cid != "__global__" and await can_manage(req.app["bot"], uid, int(cid)):
             chats.append({"id": cid, "title": c["title"], "s": cfg(cid), "stats": stats_view(c, cid),
                           "pending": sum(len(v) for k, v in buffers.items() if str(k[0]) == cid)})
-    out.update(chats=chats, voice_lib=lib(), voices=VOICES, providers=list(PROVIDERS), presets=list(PRESETS),
+    out.update(chats=chats, voice_lib=lib_for(uid), voices=VOICES, providers=list(PROVIDERS), presets=list(PRESETS),
                login=next((n for n, v in db.get("creds", {}).items() if v["uid"] == uid), ""),
                backup=bool(backup_target()), backup_avail=bool(BACKUP_CHAT))
     lg = {str(v["uid"]): n for n, v in db.get("creds", {}).items()}
@@ -709,7 +778,7 @@ async def api_state(req):
                  "login": lg.get(str(uid), ""), "via": "browser" if req.cookies.get("vb_s") else "telegram"}
     out["mfa"] = any(v["uid"] == uid and v.get("totp") for v in db.get("creds", {}).values())
     if r == "owner":
-        out["admins"] = [{"uid": k, **v, "login": lg.get(k, ""), "online": k in db.get("sess", {})} for k, v in db.get("admins", {}).items()]
+        out["admins"] = [{"uid": k, **v, "tier": v.get("tier") or "advanced", "eperms": [p for p in PERMS if has_perm(int(k), p)], "login": lg.get(k, ""), "online": k in db.get("sess", {})} for k, v in db.get("admins", {}).items()]
         out["requests"] = [{"uid": k, **v} for k, v in db.get("requests", {}).items()]
         out["audit"] = list(reversed(db.get("audit", [])[-30:]))
     return web.json_response(out)
@@ -738,6 +807,10 @@ async def api_voice(req):
     uid, b = await need(req), await req.json()
     a, L = b.get("action"), lib()
     cur = next((x for x in L if x["k"] == b.get("k")), None)
+    nprov = str((b.get("voice") or {}).get("prov", cur["prov"] if cur else "")).lower()
+    if a == "add" and not (has_perm(uid, "voice_create") and has_perm(uid, nprov)): raise web.HTTPForbidden(text="You need voice-creation access for this provider")
+    if a in ("edit", "delete") and not (cur and can_manage_voice(uid, cur)): raise web.HTTPForbidden(text="You do not have access to edit this voice")
+    if a == "edit" and not has_perm(uid, nprov): raise web.HTTPForbidden(text="You do not have access to that provider")
     if a == "delete":
         if not cur: raise web.HTTPNotFound()
         L.remove(cur)
@@ -748,6 +821,8 @@ async def api_voice(req):
         item = clean_lib([{**(b.get("voice") or {}), "k": cur["k"] if cur else ""}])
         if not item: raise web.HTTPBadRequest(text="Name, provider, language and a valid voice ID are required")
         item = item[0]
+        if uid not in OWNERS:  # access level, visibility and the allow-list are owner-only; admins keep what is stored
+            item.update({k: (cur or {}).get(k, d) for k, d in (("access", "admin"), ("visible", True), ("allow", []))})
         if any(x["name"].lower() == item["name"].lower() and x is not cur for x in L):
             raise web.HTTPConflict(text="A voice with this name already exists")
         if a == "edit":
@@ -763,7 +838,7 @@ async def api_voice(req):
     else:
         raise web.HTTPBadRequest()
     save()
-    return web.json_response({"voice_lib": L})
+    return web.json_response({"voice_lib": lib_for(uid)})
 
 async def api_action(req):
     uid, b = await need(req), await req.json()
@@ -774,18 +849,76 @@ async def api_action(req):
     await run_action(cid, b["action"], req.app["bot"])
     return web.json_response({"ok": True})
 
+dl_cache = {}
 async def api_preview(req):
-    await need(req)
+    uid = await need(req)
     b = await req.json()
     s = {**DEFAULTS, **sanitize(b.get("s", {}))}
+    pv = s.get("provider")
+    need_p = ("cartesia", "elevenlabs") if pv == "both" else (pv,)
+    if pv in ("both", "cartesia", "elevenlabs") and not any(has_perm(uid, p) for p in need_p):
+        s["provider"] = "edge"  # no access to API providers: Edge only
     try:
         audio, prov = await tts_full(str(b.get("text", "Hello"))[:1000], s, b.get("lang") or None)
     except TTSFailure as exc:
-        raise web.HTTPBadGateway(text=str(exc)[:200])
-    except Exception:
+        raise web.HTTPBadGateway(text=str(exc)[:240])
+    except Exception as exc:
         log.exception("Preview failed")
-        raise web.HTTPBadGateway(text="Could not generate the preview.")
-    return web.Response(body=audio, content_type="audio/mpeg", headers={"X-TTS-Provider": prov})
+        raise web.HTTPBadGateway(text=f"Preview failed ({type(exc).__name__}): {exc}"[:240])
+    tok = secrets.token_urlsafe(16); dl_cache[tok] = (audio, time.time(), prov)
+    for k in sorted(dl_cache, key=lambda k: dl_cache[k][1])[:-20]: dl_cache.pop(k, None)
+    return web.Response(body=audio, content_type="audio/mpeg", headers={"X-TTS-Provider": prov, "X-Audio-Token": tok})
+
+async def api_dl(req):
+    """Unguessable, 15-minute download link (works in Android / Telegram WebView where blob downloads are blocked)."""
+    e = dl_cache.get(req.match_info["tok"].removesuffix(".mp3"))
+    if not e or time.time() - e[1] > 900: raise web.HTTPNotFound()
+    return web.Response(body=e[0], content_type="audio/mpeg", headers={"Content-Disposition": f'attachment; filename="voice-{e[2]}-{int(e[1])}.mp3"', "Cache-Control": "no-store"})
+
+async def api_bot_toggle(req):
+    """Real on/off for the bot in a group (or globally): the same flag the voice pipeline checks."""
+    uid, b = await need(req), await req.json(); raw = str(b.get("chat_id")); on = bool(b.get("enabled"))
+    if raw == "__global__":
+        if not is_staff(uid): raise web.HTTPForbidden()
+        db.setdefault("global_settings", {})["enabled"] = on
+    else:
+        cid = int(raw)
+        if not await can_manage(req.app["bot"], uid, cid): raise web.HTTPForbidden()
+        chat(cid)["s"]["enabled"] = on
+    audit(uid, f"Bot turned {'on' if on else 'off'} ({'global' if raw == '__global__' else raw})"); save()
+    return web.json_response({"enabled": bool(cfg(raw if raw == "__global__" else int(raw))["enabled"])})
+
+PREF_KEYS = {"th": ("dark", "light", "system"), "ns": ("bubble", "blue"), "nl": ("float", "classic"), "sp": ("next", "right"), "bg": ("default", "aurora", "plain")}
+PREF_NUM = {"gb": (0, 40), "gt": (0, 90), "gi": (0, 100), "ts": (90, 120)}
+PREF_BOOL = ("fx", "sr", "ig", "gbd", "rf", "m3d", "hp")
+async def api_prefs(req):
+    """Per-admin appearance, saved on the server so it survives cache clears and new devices."""
+    uid, b = await need(req), await req.json()
+    if b.get("reset"): db.setdefault("prefs", {}).pop(str(uid), None); save(); return web.json_response({"ok": True})
+    p, src = {}, b.get("prefs") or {}
+    for k, o in PREF_KEYS.items():
+        if src.get(k) in o: p[k] = src[k]
+    for k, (lo, hi) in PREF_NUM.items():
+        if isinstance(src.get(k), (int, float)): p[k] = int(max(lo, min(hi, src[k])))
+    for k in PREF_BOOL:
+        if isinstance(src.get(k), bool): p[k] = src[k]
+    if re.fullmatch(r"\d{1,3},\d{1,3},\d{1,3}", str(src.get("ac", ""))): p["ac"] = src["ac"]
+    db.setdefault("prefs", {})[str(uid)] = p; save()
+    return web.json_response({"ok": True})
+
+async def api_cmds(req):
+    await need(req, owner=True)
+    b = await req.json()
+    if b.get("side") not in ("group", "private") or b.get("cmd") not in CMD_NAMES: raise web.HTTPBadRequest()
+    db.setdefault("cmdcfg", {}).setdefault(b["side"], {})[b["cmd"]] = bool(b.get("on")); save()
+    return web.json_response({"cfg": db["cmdcfg"]})
+
+async def api_primary(req):
+    await need(req, owner=True)
+    ids = [v for v in (await req.json()).get("ids", []) if v in ALL_EDGE]
+    if len(set(ids)) != 4: raise web.HTTPBadRequest(text="Pick exactly four different voices")
+    db["primary"] = ids; save()
+    return web.json_response({"primary": ids})
 
 async def api_request(req):
     u = verify_user(req.headers.get("X-Init", ""))
@@ -804,8 +937,14 @@ async def api_admin(req):
         db.get("sess", {}).pop(str(uid), None); save()
     elif a == "add":
         if uid <= 0: raise web.HTTPBadRequest(text="Invalid Telegram ID")
-        db.setdefault("admins", {})[str(uid)] = {"name": str(b.get("name", ""))[:40], "username": "", "ts": int(time.time())}
+        db.setdefault("admins", {})[str(uid)] = {"name": str(b.get("name", ""))[:40], "username": "", "ts": int(time.time()),
+                                                 "tier": b.get("tier") if b.get("tier") in ("basic", "advanced", "custom") else "basic"}
         db.get("requests", {}).pop(str(uid), None); save()
+    elif a == "perms":
+        ad = db.get("admins", {}).get(str(uid))
+        if ad is None: raise web.HTTPNotFound()
+        ad["tier"] = b.get("tier") if b.get("tier") in ("basic", "advanced", "custom") else "basic"
+        ad["perms"] = [p for p in b.get("perms", []) if p in PERMS]; save()
     elif a == "remove":
         db.get("sess", {}).pop(str(uid), None)
         db.get("admins", {}).pop(str(uid), None)
@@ -990,6 +1129,24 @@ HELP = """SAKIB Lite — Voice Assistant
 /voices — See the available voices
 /replay — Replay your last voice (or /replay <id>)"""
 
+CMD_LIST = [("start", "Start", "user"), ("help", "Help", "user"), ("about", "About", "user"), ("tts", "Text to voice", "user"), ("voices", "Choose a voice", "user"),
+            ("voicepreset", "Voice style", "user"), ("replay", "Replay a voice", "user"), ("history", "History", "user"), ("favs", "Favourites", "user"), ("fav", "Favourite", "user"),
+            ("stats", "Statistics", "user"), ("request", "Request access", "user"), ("premium", "Premium voices", "admin"), ("panel", "Admin panel", "admin"), ("on", "Bot on", "admin"),
+            ("off", "Bot off", "admin"), ("status", "Bot status", "admin"), ("provider", "Provider", "admin"), ("lang", "Language", "admin"), ("speed", "Speed", "admin"),
+            ("pitch", "Pitch", "admin"), ("volume", "Volume", "admin"), ("users", "Listed users", "admin"), ("adduser", "Add listed user", "admin"), ("deluser", "Remove listed user", "admin"),
+            ("onlylisted", "Only listed", "admin"), ("voice", "Voice settings", "admin")]
+CMD_NAMES = {c[0] for c in CMD_LIST}
+
+def cmd_enabled(name, ctype):
+    return db.get("cmdcfg", {}).get("private" if ctype == "private" else "group", {}).get(name, True)
+
+def guarded(name, fn):
+    async def g(update, ctx):
+        c, u = update.effective_chat, update.effective_user
+        if c and u and u.id not in OWNERS and not cmd_enabled(name, c.type): return  # disabled for this chat type
+        return await fn(update, ctx)
+    return g
+
 async def say(update, text): await update.effective_message.reply_text(text)
 def grp(update): return update.effective_chat.type != "private"
 
@@ -1005,7 +1162,19 @@ async def group_admin(update, ctx):
         return False
     return True
 
-async def help_cmd(update, ctx): await say(update, HELP)
+USER_CMDS = [("tts", "Turn text into a voice message"), ("voices", "Choose a voice (private chat)"), ("voicepreset", "Voice style: normal, deep, robot, child, deep_robot"),
+             ("replay", "Replay your last voice"), ("request", "Ask for admin access")]
+ADMIN_CMDS = [("panel", "Open the admin panel", None), ("on", "Turn the bot on here", None), ("off", "Turn the bot off here", None), ("status", "Bot status", None),
+              ("provider", "Change the voice provider", "providers"), ("premium", "Premium voices", "premium"), ("users", "Manage listed users", None),
+              ("approve", "Approve an access request", "owner"), ("deny", "Deny an access request", "owner"), ("admins", "List admins", "owner"), ("removeadmin", "Remove an admin", "owner")]
+
+async def help_cmd(update, ctx):
+    u, c = update.effective_user, update.effective_chat
+    ok = lambda n: cmd_enabled(n, c.type) or u.id in OWNERS
+    lines = ["SAKIB Lite — Voice Assistant", "", "User Commands"] + [f"/{n} — {d}" for n, d in USER_CMDS if ok(n) and not (n == "voices" and c.type != "private")]
+    adm = [f"/{n} — {d}" for n, d, p in ADMIN_CMDS if is_staff(u.id) and ok(n) and (p is None or (u.id in OWNERS if p == "owner" else has_perm(u.id, p)))]
+    if adm: lines += ["", "Admin Commands"] + adm
+    await say(update, "\n".join(lines))
 
 async def start_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.effective_message.reply_text(
@@ -1116,37 +1285,63 @@ def lib_text(s):
     return f"🎙 Voice library ({len(L)}):\n" + "\n".join(
         f"{'✅' if s.get(x['prov'] + '_voice_' + x['lang']) == x['id'] else '▫️'} {x['name']} — {x['prov']}/{x['lang']}" for x in L)
 
-def voices_kb(s):
-    """Two-column button grid: shared library voices first, then Edge voices per language."""
-    items = [(("✅ " if s.get(x["prov"] + "_voice_" + x["lang"]) == x["id"] else "") + x["name"], f"vs:{i}") for i, x in enumerate(lib())]
-    for lg in ("bn", "en"):
-        for k, v in enumerate(VOICES[lg]):
-            items.append((("✅ " if s.get("voice_" + lg) == v else "") + v.split("-", 2)[-1].replace("Neural", "") + f" · Edge {lg}", f"ve:{lg}:{k}"))
-    return InlineKeyboardMarkup([[InlineKeyboardButton(t[:34], callback_data=d) for t, d in items[i:i + 2]] for i in range(0, len(items), 2)])
+ALL_EDGE = list(VOICES["bn"]) + list(VOICES["en"])
+LBL = {"en": "ENG", "bn": "BN"}
+def vlabel(v): return f"{v['name']} · {LBL.get(v['lang'], v['lang'].upper())}"  # language label comes from metadata, never from the typed name
+def elabel(n): return f"{n.split('-', 2)[-1].replace('Neural', '')} · {'BN' if n.startswith('bn') else 'ENG'}"
+def primary():
+    ids = [v for v in db.get("primary", []) if v in ALL_EDGE]
+    return ids if len(ids) == 4 else (ALL_EDGE[:2] + ALL_EDGE[len(VOICES["bn"]):len(VOICES["bn"]) + 2])
+
+def sel_settings(uid):
+    return {**DEFAULTS, **db.get("global_settings", {}), **({} if is_staff(uid) else db.get("users", {}).get(str(uid), {}))}
+
+def voices_kb(uid, page=0):
+    s = sel_settings(uid); cur = {s.get("voice_bn"), s.get("voice_en")}
+    mk = lambda t, d: InlineKeyboardButton(t[:34], callback_data=d)
+    if page == 0:
+        items = [(("✅ " if v in cur and s.get("provider") == "edge" else "") + elabel(v), f"ve:{ALL_EDGE.index(v)}") for v in primary()]
+        rows = [[mk(t, d) for t, d in items[i:i + 2]] for i in range(0, len(items), 2)]
+        return InlineKeyboardMarkup(rows + [[mk("MORE+", "vm:1")]])
+    items = [(elabel(v), f"ve:{ALL_EDGE.index(v)}") for v in ALL_EDGE if v not in primary()]
+    items += [(f"{v['prov'].upper()} · {vlabel(v)}", f"vs:{v['k']}") for v in lib() if v.get("access") == "public" and v.get("visible", True) and v.get("enabled", True)]
+    rows = [[mk(t, d) for t, d in items[i:i + 2]] for i in range(0, len(items), 2)]
+    return InlineKeyboardMarkup(rows + [[mk("‹ BACK", "vm:0")]])
 
 async def voices_cmd(update, ctx):
-    await update.effective_message.reply_text("🎙 Choose a voice (✅ = in use). Library voices and Edge voices are listed together.\nOnly approved admins can change it.",
-                                              reply_markup=voices_kb(cfg(command_scope(update))))
+    if update.effective_chat.type != "private":  # never show voice lists or keyboards in groups
+        return await say(update, "🎙 Voice selection is available in a private chat with me.")
+    await update.effective_message.reply_text("🎙 Choose a voice:", reply_markup=voices_kb(update.effective_user.id))
+
+async def premium_cmd(update, ctx):
+    u = update.effective_user
+    if update.effective_chat.type != "private": return await say(update, "💎 Premium voices are available in a private chat with me.")
+    if not has_perm(u.id, "premium"): return await say(update, "⛔ Premium access required.")
+    vs = [v for v in lib() if v.get("access") == "premium" and v.get("enabled", True) and v.get("visible", True) and can_use_voice(u.id, v)]
+    if not vs: return await say(update, "No premium voices yet.")
+    await update.effective_message.reply_text("💎 Premium voices:", reply_markup=InlineKeyboardMarkup(
+        [[InlineKeyboardButton(f"{v['prov'].upper()} · {vlabel(v)}"[:60], callback_data=f"vs:{v['k']}")] for v in vs]))
 
 async def cb_voice(update, ctx):
     q = update.callback_query; u, c = q.from_user, q.message.chat
-    if not (is_staff(u.id) if c.type == "private" else await can_manage(ctx.bot, u.id, c.id)):
-        return await q.answer("Only approved admins can change voices", show_alert=True)
-    scope = "__global__" if c.type == "private" else c.id; s = cfg(scope)
+    if c.type != "private": return await q.answer("Voice selection works in a private chat only", show_alert=True)
+    p = q.data.split(":")
     try:
-        p = q.data.split(":")
+        if p[0] == "vm":
+            await q.answer(); return await q.edit_message_reply_markup(voices_kb(u.id, int(p[1])))
         if p[0] == "vs":
-            x = lib()[int(p[1])]; kw = {x["prov"] + "_voice_" + x["lang"]: x["id"]}
-            if s.get("provider") != "both": kw["provider"] = x["prov"]
+            v = next(x for x in lib() if x["k"] == p[1])
+            if not (can_use_voice(u.id, v) and v.get("visible", True)): return await q.answer("This voice is not available to you", show_alert=True)
+            kw, name = {v["prov"] + "_voice_" + v["lang"]: v["id"], "provider": v["prov"]}, f"{v['prov'].upper()} · {vlabel(v)}"
         else:
-            kw = {"voice_" + p[1]: VOICES[p[1]][int(p[2])], "provider": "edge"}
-    except (IndexError, KeyError, ValueError):
+            e = ALL_EDGE[int(p[1])]; kw, name = {"voice_" + e[:2]: e, "provider": "edge"}, elabel(e)
+    except (IndexError, KeyError, ValueError, StopIteration):
         return await q.answer("The list changed. Send /voices again.", show_alert=True)
     clean = sanitize(kw)
-    if scope == "__global__": db.setdefault("global_settings", {}).update(clean); save()
-    else: put(scope, **clean)
-    await q.answer("Saved ✓")
-    try: await q.edit_message_reply_markup(voices_kb(cfg(scope)))
+    if is_staff(u.id): db.setdefault("global_settings", {}).update(clean)
+    else: db.setdefault("users", {}).setdefault(str(u.id), {}).update(clean)
+    save(); await q.answer("Saved ✓")
+    try: await q.edit_message_text(f"✅ Voice set: {name}", reply_markup=None)  # removes the whole keyboard
     except Exception: pass
 
 async def panel_only_cmd(update, ctx):
@@ -1254,7 +1449,8 @@ COMMANDS = [
 
 STT_MAX = 40 * 1024 * 1024
 async def api_credits(req):
-    await need(req)
+    uid = await need(req)
+    if not (has_perm(uid, "providers") or has_perm(uid, "elevenlabs")): raise web.HTTPForbidden(text="ElevenLabs access required")
     return web.json_response({"elevenlabs": await el_balance(force=True) if ELEVENLABS_API_KEY else {"error": "ELEVENLABS_API_KEY is not set"}})
 
 async def api_stt(req):
@@ -1276,6 +1472,7 @@ async def api_stt(req):
             elif part.name == "model": model = v
             else: lang = v
     if not data: raise web.HTTPBadRequest(text="No file received")
+    if prov in ("elevenlabs", "cartesia") and not has_perm(uid, prov): raise web.HTTPForbidden(text="You do not have access to this provider")
     lang = lang if re.fullmatch(r"[a-z]{2,3}", lang or "") else ""
     fd = aiohttp.FormData(); fd.add_field("file", data, filename=fname[:80], content_type=ctype)
     if prov == "elevenlabs":
@@ -1312,7 +1509,7 @@ async def post_init(app):
     w.add_routes([web.get("/", health), web.get("/health", health), web.get("/app", page), web.get("/api/state", api_state),
                   web.post("/api/save", api_save), web.post("/api/voice", api_voice), web.post("/api/action", api_action),
                   web.post("/api/preview", api_preview), web.post("/api/request", api_request),
-                  web.post("/api/login", api_login), web.post("/api/creds", api_creds), web.post("/api/backup", api_backup), web.post("/api/logout", api_logout), web.post("/api/mfa", api_mfa), web.get("/api/export", api_export), web.get("/api/credits", api_credits), web.post("/api/stt", api_stt),
+                  web.post("/api/login", api_login), web.post("/api/creds", api_creds), web.post("/api/backup", api_backup), web.post("/api/logout", api_logout), web.post("/api/mfa", api_mfa), web.get("/api/export", api_export), web.get("/api/credits", api_credits), web.get("/dl/{tok}", api_dl), web.post("/api/bot_toggle", api_bot_toggle), web.post("/api/prefs", api_prefs), web.post("/api/cmds", api_cmds), web.post("/api/primary", api_primary), web.post("/api/stt", api_stt),
                   web.post("/api/admin", api_admin), web.get("/api/history", api_history),
                   web.post("/api/hist", api_hist), web.get("/api/histaudio", api_histaudio)])
     runner = web.AppRunner(w); await runner.setup()
@@ -1336,7 +1533,9 @@ async def post_shutdown(app):
 
 def main():
     app = ApplicationBuilder().token(TOKEN).post_init(post_init).post_stop(post_stop).post_shutdown(post_shutdown).build()
-    H = app.add_handler
+    def H(h):
+        if isinstance(h, CommandHandler): h.callback = guarded(sorted(h.commands)[0], h.callback)
+        app.add_handler(h)
     H(CommandHandler("start", start_cmd)); H(CommandHandler("panel", panel)); H(CommandHandler("about", about_cmd))
     H(CommandHandler("help", help_cmd))
     H(CommandHandler("voice", voice_cmd)); H(CommandHandler("clear", clear_cmd))
@@ -1356,7 +1555,8 @@ def main():
     H(CommandHandler("deny", deny_cmd)); H(CommandHandler("admins", admins_cmd))
     H(CommandHandler("removeadmin", removeadmin_cmd)); H(CommandHandler("tts", tts_cmd))
     H(CallbackQueryHandler(cb_admin, pattern=r"^adm:(ok|no):\d+$"))
-    H(CallbackQueryHandler(cb_voice, pattern=r"^v[se]:"))
+    H(CallbackQueryHandler(cb_voice, pattern=r"^v[mse]:"))
+    H(CommandHandler("premium", premium_cmd))
     H(MessageHandler(filters.ChatType.GROUPS & (filters.TEXT | filters.CAPTION) & ~filters.COMMAND, collect))
     app.add_error_handler(on_error)
     app.run_polling(allowed_updates=Update.ALL_TYPES, bootstrap_retries=-1)
