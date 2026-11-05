@@ -388,6 +388,17 @@ textarea.big{font:inherit;font-size:15px;line-height:1.45;font-weight:400;color:
 textarea::placeholder,input::placeholder{color:var(--mut);opacity:.8}
 input:focus,select:focus,textarea:focus{border-color:var(--ac);box-shadow:none;outline:0}
 .sheet{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+/* ---- v20: clearer glass in lite mode, voice library rows + editor ---- */
+html.slow nav .gl,html.slow .drawer .gl,html.slow #mb .gl,html.slow #sr .gl,html.slow #sq .gl{background:rgba(255,255,255,.10)}
+html.slow[data-th=light] nav .gl,html.slow[data-th=light] .drawer .gl,html.slow[data-th=light] #mb .gl,html.slow[data-th=light] #sr .gl,html.slow[data-th=light] #sq .gl{background:rgba(255,255,255,.7)}
+.chip{display:inline-flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--fill);color:var(--mut)}
+.chip.lg{background:rgba(var(--acrgb),.16);color:var(--ac)}.chip.off{background:rgba(255,69,58,.14);color:#ff6961}
+.vr{display:flex;align-items:center;gap:10px;padding:12px 0}.vr+.vr{border-top:1px solid var(--hair)}.vm{flex:1;min-width:0}
+.vt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.vt b{font-size:15px}.vc{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.vid{font-size:12px;color:var(--mut);margin-top:6px;font-family:ui-monospace,Menlo,monospace}
+.va{display:flex;gap:6px;align-items:center;flex:none}.btn.ib{width:36px;min-width:36px;padding:0;display:grid;place-items:center}.btn.ib svg{width:17px;height:17px}
+.vs .ph{margin-bottom:6px}.vs .l{display:block;margin:10px 0 4px;font-size:12px;color:var(--mut);font-weight:500}.vs .fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vs .sec{border-top:1px solid var(--hair);margin-top:16px;padding-top:12px}.vs h5{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);font-weight:600}
 </style></head>
 <body>
 <header id="hd" hidden><select id="chat"></select></header><div class="savebar" id="sb" hidden><span id="sv">Unsaved changes</span><button class="btn pri sm" onclick="saveNow()">Save</button></div>
@@ -484,7 +495,7 @@ voice(){const c=C(),s=c.s,P={normal:'Normal',deep:'Deep',robot:'Robot',child:'Ch
  <div class="row"><span>Live preview on change</span><label class="sw"><input type="checkbox" ${live?'checked':''} onchange="live=this.checked"><i></i></label></div>
  <input type="text" id="pt" value="Hello! This is a test voice."><br><br><button class="btn pri" style="width:100%" onclick="prev()">🔊 Preview</button></div>
  <div class="card s4"><div class="row" style="padding:0"><h4 style="margin:0">Voice library</h4><button class="btn sm pri" onclick="vSheet()">＋ Add voice</button></div><div class="mut" style="margin:4px 0 6px">Shared by all groups. “Use” applies to: <b>${esc(c.title||'Global')}</b></div>
- ${s.provider=='edge'?'<div class="hint" style="margin:0 0 6px">Edge TTS is selected, so no library voice is in use.</div>':''}${(S.voice_lib||[]).map(v=>{const on=inUse(v);return `<div class="item"><div class="t"><div><b>${esc(vl(v))}</b>${v.access&&v.access!='admin'?`<span class="tag">${{selected:'Selected',premium:'Premium',public:'Public'}[v.access]}</span>`:''}${v.enabled===false?'<span class="tag">Disabled</span>':''}${v.visible===false?'<span class="tag">Hidden</span>':''} ${on?'<span class="tag ok">in use</span>':''}</div><div class="mut">${v.prov} · ${v.lang} · ${esc(v.id.slice(0,12))}…</div></div><button class="btn sm use ${on?'on':''}" onclick="useV('${v.k}')">${on?'In use':'Use'}</button><button class="btn sm" onclick="vSheet('${v.k}')">✎</button><button class="btn sm red" onclick="delV('${v.k}')">✕</button></div>`}).join('')||'<div class="mut">Library is empty</div>'}
+ ${s.provider=='edge'?'<div class="hint" style="margin:0 0 6px">Edge TTS is selected, so no library voice is in use.</div>':''}${libRows()||'<div class="empty"><b>No voices yet</b><span>Add a Cartesia or ElevenLabs voice ID.</span></div>'}
  <details><summary>Direct voice ID fields</summary>${ids.map(([p,l,n])=>`<label class="l">${n}</label><input type="text" value="${esc(s[p+'_voice_'+l]||'')}" placeholder="voice ID" onchange="set('${p}_voice_${l}',this.value.trim())">`).join('')}</details></div>
  <div class="card s4"><h4>ElevenLabs quality</h4>${sld('el_stability','Stability',0,100,'%')}${sld('el_similarity','Similarity boost',0,100,'%')}<div class="hint">Higher stability sounds steadier; lower sounds more expressive.</div></div>
  <div class="card s4"><h4>Fallback</h4>${tog('fallback_edge','In Auto mode, fall back to Edge TTS when APIs fail')}<div class="hint">Off means Auto mode reports the error instead of switching to Edge.</div></div>
@@ -515,7 +526,7 @@ function setT(n,v){C().s.timers[n]=Math.max(1,+v||1);mark('timers')}
 function delT(n){delete C().s.timers[n];mark('timers');render()}
 function addT(){const n=$('#nu').value.trim().toLowerCase().replace(/^@/,'');if(!n)return;C().s.timers[n]=Math.max(1,+$('#ns').value||15);mark('timers');render()}
 const VK=k=>(S.voice_lib||[]).find(v=>v.k==k);
-function vSheet(k){const v=VK(k)||{};$('#sh').innerHTML=`<div class="panel"><h4>${k?'Edit voice':'Add voice'}</h4><div class="g"><input type="text" id="vn" placeholder="Name" maxlength="30" value="${esc(v.name||'')}"><input type="text" id="vi" placeholder="Voice ID" value="${esc(v.id||'')}"><div class="g g2"><select id="vp"><option ${v.prov=='cartesia'?'selected':''}>cartesia</option><option ${v.prov=='elevenlabs'?'selected':''}>elevenlabs</option></select><select id="vl"><option value="bn" ${v.lang=='bn'?'selected':''}>Bangla</option><option value="en" ${v.lang=='en'?'selected':''}>English</option></select></div>${VX(v)}</div><br><div class="g g2"><button class="btn" onclick="vClose()">Cancel</button><button class="btn pri" onclick="vSave('${k||''}')">Save</button></div></div>`;$('#sh').hidden=false}
+function vSheet(k){vSheetNew(k)}
 
 async function vSave(k){const voice={name:$('#vn').value.trim(),id:$('#vi').value.trim(),prov:$('#vp').value,lang:$('#vl').value,...vExtra()};
   if(!voice.name||!/^[\w-]{6,80}$/.test(voice.id))return toast('Enter a name and a valid voice ID',1);
@@ -664,7 +675,7 @@ function loginTilt(){return}function _oldTilt(rx,ry,fast){const c=document.query
 
 function msFilter(v){MSQ=v.trim().toLowerCase();document.querySelectorAll('#m .card').forEach(c=>{c.hidden=!!MSQ&&!c.textContent.toLowerCase().includes(MSQ)})}
 function moreExtras(){if(tab!='more')return;const m=$('#m');
-  if(S.cmds&&!$('#cmdc'))m.insertAdjacentHTML('beforeend',cmdCard()+primCard());if(!$('#dg')){const cs=n=>{try{return CSS.supports('backdrop-filter',n)}catch(e){return false}},R=[['App version','v13'],['Screen',`${innerWidth}×${innerHeight} @${devicePixelRatio}x`],['Telegram',`${tg.platform||'web'} ${tg.version||''}`],['Glass blur',cs('blur(1px)')?'Supported':'Not supported'],['Edge refraction',RFOK?(PREF.rf?'On':'Available'):'Unavailable'],['3D motion',PREF.m3d&&!PREF.fx&&!RM()?'On':'Off'],['Layout',PREF.nl=='classic'?'Classic bar':'Floating glass']];
+  if(S.cmds&&!$('#cmdc'))m.insertAdjacentHTML('beforeend',cmdCard()+primCard());if(!$('#dg')){const cs=n=>{try{return CSS.supports('backdrop-filter',n)}catch(e){return false}},R=[['App version','v13'],['Screen',`${innerWidth}×${innerHeight} @${devicePixelRatio}x`],['Telegram',`${tg.platform||'web'} ${tg.version||''}`],['Glass blur',cs('blur(1px)')?'Supported':'Not supported'],['Edge refraction',RFOK?(PREF.rf?'On':'Available'):'Unavailable'],['3D motion',PREF.m3d&&!PREF.fx&&!RM()?'On':'Off'],['Layout',PREF.nl=='classic'?'Classic bar':'Floating glass'],['Refresh rate',(window.HZ||'…')+' Hz'],['Render mode',document.documentElement.classList.contains('slow')?'Lite (auto)':'Full']];
     m.insertAdjacentHTML('beforeend',`<div class="card s4" id="dg"><h4>Diagnostics</h4><div class="kv">${R.map(([a,b])=>`<span>${a}</span><b>${esc(b)}</b>`).join('')}</div><button class="btn sm ghost" onclick="fpsTest()">Run frame test</button><div id="fr" class="res">Measures your screen's refresh rate and dropped frames for 2 seconds. Scroll while it runs for a realistic result.</div></div>`)}
   if(MSQ)msFilter(MSQ)}
 function fpsTest(){const o=$('#fr'),t=[];o.className='res';o.textContent='Measuring… keep scrolling';let last=performance.now(),end=last+2000;
@@ -693,7 +704,7 @@ const MOD=()=>S.models||{el_tts:['eleven_multilingual_v2'],ca_tts:['sonic-3.6'],
 const mseg=(cur,opts,fn)=>`<div class="seg${opts.length==2?' two':''}">${opts.map(([v,t])=>`<button class="${cur==v?'on':''}" onclick="${fn}('${v}')">${t}</button>`).join('')}</div>`;
 let TS={prov:'elevenlabs',lang:'en',text:''},ST={prov:'elevenlabs',lang:'',file:null,busy:0,text:'',meta:''};
 V.tts=function(){const s=C().s,M=MOD(),lib=(S.voice_lib||[]).filter(v=>v.prov==TS.prov&&v.lang==TS.lang),cur=TS.prov=='edge'?s['voice_'+TS.lang]:s[TS.prov+'_voice_'+TS.lang];
-  const vo=TS.prov=='edge'?(S.voices[TS.lang]||[]).map(v=>[v,vname(v)]):lib.map(v=>[v.id,vl(v)+(v.access=='premium'?' ★':'')]);
+  const vo=TS.prov=='edge'?(S.voices[TS.lang]||[]).map(v=>[v,vname(v)]):lib.map(v=>[v.id,vl(v)]);
   return `<div class="bento"><div class="card s4"><h4>Text to Speech</h4>${mseg(TS.prov,[['elevenlabs','ElevenLabs'],['cartesia','Cartesia'],['edge','Edge']],'ttsP')}
   <div style="height:10px"></div>${mseg(TS.lang,[['bn','Bangla'],['en','English']],'ttsL')}
   ${TS.prov=='elevenlabs'?sel('el_tts_model','Model',M.el_tts.map(x=>[x,x])):TS.prov=='cartesia'?sel('ca_tts_model','Model',M.ca_tts.map(x=>[x,x])):''}
@@ -760,12 +771,12 @@ function dlAudio(){const a=AU;if(!a)return;const url=location.origin+'/dl/'+a.to
   const l=document.createElement('a');l.href=a.tok?url:a.blob;l.download=nm;document.body.appendChild(l);l.click();l.remove()}
 async function savePrefs(){persist();try{await api('/api/prefs',{prefs:PREF});toast('Settings saved ✓')}catch(e){toast('Saved on this device only',1)}}
 function syncPrefs(){if(PSYNC||!S||S.prefs===undefined)return;PSYNC=1;if(S.prefs&&!ls('vb_pref')){Object.assign(PREF,S.prefs);persist();applyPref()}}
-const PL={elevenlabs:'ElevenLabs access',cartesia:'Cartesia access',voice_refs:'Voice references',voice_edit:'Edit voices',voice_create:'Create voices',premium:'Premium management',providers:'Provider configuration'},PADV=['elevenlabs','cartesia','voice_refs','voice_edit','voice_create','premium'];
+const PL={elevenlabs:'ElevenLabs access',cartesia:'Cartesia access',voice_refs:'Voice references',voice_edit:'Edit voices',voice_create:'Create voices',providers:'Provider configuration'},PADV=['elevenlabs','cartesia','voice_refs','voice_edit','voice_create'];
 let PS=null;
 function permSheet(u){const a=(S.admins||[]).find(x=>x.uid==u);if(!a)return;PS={u,tier:a.tier,perms:[...a.eperms]};permDraw()}
 function permTier(t){PS.tier=t;if(t=='basic')PS.perms=[];else if(t=='advanced')PS.perms=[...PADV];permDraw()}
 function permTog(k,on){PS.perms=on?[...new Set([...PS.perms,k])]:PS.perms.filter(x=>x!=k)}
-const PHINT={basic:'Can use the panel and bot commands. No provider, voice or premium access.',advanced:'ElevenLabs, Cartesia, voice references, edit and create voices, premium.',custom:'Choose exactly what this admin can do.'};
+const PHINT={basic:'Can use the panel and bot commands. No provider or voice access.',advanced:'ElevenLabs, Cartesia, voice references, edit and create voices.',custom:'Choose exactly what this admin can do.'};
 function permDraw(){const c=PS.tier=='custom';
   if($('#pm')){document.querySelectorAll('#pm .seg button').forEach(b=>b.classList.toggle('on',b.dataset.t==PS.tier));$('#pmh').textContent=PHINT[PS.tier];
     document.querySelectorAll('#pm .ckl').forEach(l=>{const x=l.querySelector('input');x.checked=PS.perms.includes(x.dataset.k);x.disabled=!c;l.classList.toggle('off',!c)});return}
@@ -775,10 +786,6 @@ function permDraw(){const c=PS.tier=='custom';
   <div class="hint">Reference-only access: leave voice references off and list the admin under "Selected admins" on a voice. They can then use only those voices. Everything is checked on the server.</div><br>
   <div class="g g2"><button class="btn" onclick="vClose()">Cancel</button><button class="btn pri" onclick="permSave()">Save</button></div></div>`;$('#sh').hidden=false}
 async function permSave(){try{await api('/api/admin',{action:'perms',uid:PS.u,tier:PS.tier,perms:PS.perms});vClose();toast('Permissions saved ✓');load()}catch(e){toast((e.message||'Failed').slice(0,60),1)}}
-function VX(v){const own=S.role=='owner',o=(x,t,c)=>`<option value="${x}" ${c==x?'selected':''}>${t}</option>`,md=(S.models||{})[(v.prov=='elevenlabs'?'el':'ca')+'_tts']||[];
-  return `<input type="text" id="vmd" placeholder="Model (optional, e.g. ${esc(md[0]||'sonic-3.6')})" maxlength="60" value="${esc(v.model||'')}">`+(own?`<div class="g g2"><select id="vac" title="Access">${o('admin','Admin only',v.access||'admin')}${o('selected','Selected admins',v.access)}${o('premium','Premium only',v.access)}${o('public','Public',v.access)}</select><select id="ven" title="Status">${o('1','Enabled',v.enabled===false?'0':'1')}${o('0','Disabled',v.enabled===false?'0':'1')}</select></div><select id="vvi" title="Visibility">${o('1','Visible in lists',v.visible===false?'0':'1')}${o('0','Hidden from lists',v.visible===false?'0':'1')}</select>
-  <div class="hint">Selected admins (used when access is "Selected admins")</div>${(S.admins||[]).map(a=>`<label class="ckl"><input type="checkbox" class="vaw" value="${a.uid}" ${(v.allow||[]).includes(+a.uid)?'checked':''}>${esc(a.name||'Admin')} <span class="mut">${a.uid}</span></label>`).join('')||'<div class="mut">No admins yet</div>'}`:'')}
-function vExtra(){const g=i=>($(i)||{}).value,x={model:g('#vmd')||''};if($('#vac')){x.access=g('#vac');x.enabled=g('#ven')=='1';x.visible=g('#vvi')=='1';x.allow=[...document.querySelectorAll('.vaw:checked')].map(e=>+e.value)}return x}
 function cmdCard(){const L=S.cmds.list,cf=S.cmds.cfg||{},on=(s,n)=>(cf[s]||{})[n]!==false,row=([n,d])=>`<span>/${n} <span class="mut">${esc(d)}</span></span>${['group','private'].map(s=>`<label class="sw"><input type="checkbox" ${on(s,n)?'checked':''} onchange="cmdSet('${s}','${n}',this)"><i></i></label>`).join('')}`;
   return `<div class="card s4" id="cmdc"><h4>Commands: groups &amp; private</h4><div class="hint" style="margin:-4px 0 10px">Turn each command on or off separately. Owners always keep access.</div><div class="cmdg"><span></span><span class="ch">Groups</span><span class="ch">Private</span>${L.filter(c=>c[2]=='user').map(row).join('')}<span class="ch" style="grid-column:1/4;text-align:left;padding-top:8px">Admin commands</span>${L.filter(c=>c[2]=='admin').map(row).join('')}</div></div>`}
 async function cmdSet(side,cmd,el){el.disabled=true;try{const r=await api('/api/cmds',{side,cmd,on:el.checked});S.cmds.cfg=r.cfg}catch(e){el.checked=!el.checked;toast('Could not change the command',1)}el.disabled=false}
@@ -796,6 +803,27 @@ IC.look='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width
 IC.login='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>';
 document.querySelectorAll('.di[data-k=look],.di[data-k=login]').forEach(b=>b.insertAdjacentHTML('afterbegin',IC[b.dataset.k]));
 function perfProbe(){const r=document.documentElement,t=[];let l=performance.now(),n=0;(function f(x){t.push(x-l);l=x;if(++n<45)requestAnimationFrame(f);else{t.shift();const s=[...t].sort((a,b)=>a-b),med=s[s.length>>1]||16.7,p90=s[Math.floor(s.length*.9)]||med;
-  window.HZ=r.dataset.hz=med<10.2?120:med<13.4?90:60;SLN=(p90>med*2.2||med>22)?SLN+1:0;r.classList.toggle('slow',SLN>=2&&!PREF.fx)}})(l)}
+  window.HZ=r.dataset.hz=med<10.2?120:med<13.4?90:60;SLN=med>26?SLN+1:0;r.classList.toggle('slow',SLN>=3&&!PREF.fx)}})(l)}
 setTimeout(perfProbe,1500);setTimeout(perfProbe,6000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(perfProbe,800)});
+
+/* ---- v20: voice library rows + editor ---- */
+const I_EDIT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',I_DEL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',ACL={admin:'Admins',public:'Public'},VAH={admin:'Admins with access to this provider can use the voice.',public:'Anyone can pick this voice in /voices (MORE+) and in the panel.'};
+function libRows(){return (S.voice_lib||[]).map(v=>{const on=inUse(v),ra=(v.allow||[]).length;
+  return `<div class="vr"><div class="vm"><div class="vt"><b>${esc(v.name)}</b><span class="chip lg">${v.lang=='bn'?'BN':'ENG'}</span>${on?'<span class="tag ok">In use</span>':''}</div><div class="vc"><span class="chip">${esc(v.prov)}</span><span class="chip">${ACL[v.access]||'Admins'}</span>${ra?`<span class="chip">Ref · ${ra}</span>`:''}${v.enabled===false?'<span class="chip off">Disabled</span>':''}${v.visible===false?'<span class="chip off">Hidden</span>':''}</div><div class="vid">${esc(v.id.slice(0,18))}${v.id.length>18?'…':''}</div></div>
+  <div class="va"><button class="btn sm use ${on?'on':''}" onclick="useV('${v.k}')">${on?'In use':'Use'}</button><button class="btn sm ib" aria-label="Edit voice" onclick="vSheet('${v.k}')">${I_EDIT}</button><button class="btn sm ib red" aria-label="Delete voice" onclick="delV('${v.k}')">${I_DEL}</button></div></div>`}).join('')}
+function vmOpts(p,cur){const l=(S.models||{})[p=='elevenlabs'?'el_tts':'ca_tts']||[];return '<option value="">Default (chat setting)</option>'+l.map(x=>`<option value="${esc(x)}" ${x==cur?'selected':''}>${esc(x)}</option>`).join('')}
+function vpChg(){$('#vmd').innerHTML=vmOpts($('#vp').value,'')}
+function vAcc(x){$('#vac').value=x;document.querySelectorAll('#vacs button').forEach(b=>b.classList.toggle('on',b.dataset.v==x));$('#vach').textContent=VAH[x]}
+function vSheetNew(k){const v=VK(k)||{},own=S.role=='owner',ac=v.access||'admin';
+  $('#sh').innerHTML=`<div class="panel vs"><div class="ph"><h4>${k?'Edit voice':'Add voice'}</h4></div>
+  <label class="l" for="vn">Name</label><input type="text" id="vn" maxlength="30" value="${esc(v.name||'')}" placeholder="e.g. Daniel">
+  <label class="l" for="vi">Voice ID</label><input type="text" id="vi" value="${esc(v.id||'')}" placeholder="Paste the provider's voice ID" autocomplete="off" autocapitalize="none" spellcheck="false">
+  <div class="fr"><div><label class="l" for="vp">Provider</label><select id="vp" onchange="vpChg()"><option value="cartesia" ${v.prov!='elevenlabs'?'selected':''}>Cartesia</option><option value="elevenlabs" ${v.prov=='elevenlabs'?'selected':''}>ElevenLabs</option></select></div>
+  <div><label class="l" for="vl">Language</label><select id="vl"><option value="bn" ${v.lang=='bn'?'selected':''}>Bangla · BN</option><option value="en" ${v.lang!='bn'?'selected':''}>English · ENG</option></select></div></div>
+  <label class="l" for="vmd">Model <span style="opacity:.7">· optional</span></label><select id="vmd">${vmOpts(v.prov||'cartesia',v.model)}</select>
+  ${own?`<div class="sec"><h5>Access</h5><div class="seg two" id="vacs">${[['admin','Admins'],['public','Public']].map(([x,t])=>`<button type="button" data-v="${x}" class="${ac==x?'on':''}" onclick="vAcc('${x}')">${t}</button>`).join('')}</div><input type="hidden" id="vac" value="${ac}"><div class="hint" id="vach">${VAH[ac]}</div></div>
+  <div class="sec"><h5>Reference access</h5><div class="hint" style="margin:0 0 6px">Allow a specific admin to use this voice even without full provider access.</div>${(S.admins||[]).map(a=>`<div class="row" style="padding:0"><span>${esc(a.name||'Admin')} <span class="mut">${a.uid}</span></span><label class="sw"><input type="checkbox" class="vaw" value="${a.uid}" ${(v.allow||[]).includes(+a.uid)?'checked':''}><i></i></label></div>`).join('')||'<div class="mut">No admins yet</div>'}</div>
+  <div class="sec"><h5>Status</h5><div class="row" style="padding:0"><span>Enabled</span><label class="sw"><input type="checkbox" id="ven" ${v.enabled===false?'':'checked'}><i></i></label></div><div class="row" style="padding:0"><span>Visible in lists</span><label class="sw"><input type="checkbox" id="vvi" ${v.visible===false?'':'checked'}><i></i></label></div></div>`:''}
+  <div class="g g2" style="margin-top:16px"><button class="btn" onclick="vClose()">Cancel</button><button class="btn pri" onclick="vSave('${k||''}')">Save</button></div></div>`;$('#sh').hidden=false}
+function vExtra(){const g=i=>($(i)||{}).value,x={model:g('#vmd')||''};if($('#vac')){x.access=g('#vac');x.enabled=$('#ven').checked;x.visible=$('#vvi').checked;x.allow=[...document.querySelectorAll('.vaw:checked')].map(e=>+e.value)}return x}
 </script></body></html>

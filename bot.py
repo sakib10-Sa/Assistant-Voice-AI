@@ -209,7 +209,7 @@ def clean_lib(v):
         if not re.fullmatch(r"[0-9a-f]{8}", k) or k in seen:
             k = secrets.token_hex(4)
         if n and p in ("cartesia", "elevenlabs") and l in ("bn", "en") and ID_RE.match(i):
-            acc = str(x.get("access", "admin")); acc = acc if acc in ("admin", "selected", "premium", "public") else "admin"
+            acc = "public" if str(x.get("access", "admin")) == "public" else "admin"  # access is Admins or Public; per-admin reference access lives in "allow"
             allow = [int(u) for u in x.get("allow", []) if str(u).lstrip("-").isdigit()][:50]
             seen.add(k); out.append({"k": k, "name": n, "prov": p, "lang": l, "id": i, "access": acc, "visible": bool(x.get("visible", True)),
                                      "enabled": bool(x.get("enabled", True)), "model": str(x.get("model", ""))[:60], "allow": allow})
@@ -618,8 +618,8 @@ def role_of(uid):
 
 def is_staff(uid): return role_of(uid) in ("owner", "admin")
 
-PERMS = ["elevenlabs", "cartesia", "voice_refs", "voice_edit", "voice_create", "premium", "providers"]
-TIERS = {"basic": [], "advanced": ["elevenlabs", "cartesia", "voice_refs", "voice_edit", "voice_create", "premium"]}
+PERMS = ["elevenlabs", "cartesia", "voice_refs", "voice_edit", "voice_create", "providers"]
+TIERS = {"basic": [], "advanced": ["elevenlabs", "cartesia", "voice_refs", "voice_edit", "voice_create"]}
 
 def has_perm(uid, p):
     """Server-side permission check. Owners have everything; admins get their tier's list or their custom list."""
@@ -635,7 +635,6 @@ def can_use_voice(uid, v):
     if uid in v.get("allow", []): return True  # explicitly authorised: reference-only admins can use only these
     a = v.get("access", "admin")
     if a == "public": return True
-    if a == "premium": return has_perm(uid, "premium")
     if a == "admin": return has_perm(uid, v["prov"]) and has_perm(uid, "voice_refs")
     return False
 
@@ -1131,7 +1130,7 @@ HELP = """SAKIB Lite — Voice Assistant
 
 CMD_LIST = [("start", "Start", "user"), ("help", "Help", "user"), ("about", "About", "user"), ("tts", "Text to voice", "user"), ("voices", "Choose a voice", "user"),
             ("voicepreset", "Voice style", "user"), ("replay", "Replay a voice", "user"), ("history", "History", "user"), ("favs", "Favourites", "user"), ("fav", "Favourite", "user"),
-            ("stats", "Statistics", "user"), ("request", "Request access", "user"), ("premium", "Premium voices", "admin"), ("panel", "Admin panel", "admin"), ("on", "Bot on", "admin"),
+            ("stats", "Statistics", "user"), ("request", "Request access", "user"), ("panel", "Admin panel", "admin"), ("on", "Bot on", "admin"),
             ("off", "Bot off", "admin"), ("status", "Bot status", "admin"), ("provider", "Provider", "admin"), ("lang", "Language", "admin"), ("speed", "Speed", "admin"),
             ("pitch", "Pitch", "admin"), ("volume", "Volume", "admin"), ("users", "Listed users", "admin"), ("adduser", "Add listed user", "admin"), ("deluser", "Remove listed user", "admin"),
             ("onlylisted", "Only listed", "admin"), ("voice", "Voice settings", "admin")]
@@ -1165,7 +1164,7 @@ async def group_admin(update, ctx):
 USER_CMDS = [("tts", "Turn text into a voice message"), ("voices", "Choose a voice (private chat)"), ("voicepreset", "Voice style: normal, deep, robot, child, deep_robot"),
              ("replay", "Replay your last voice"), ("request", "Ask for admin access")]
 ADMIN_CMDS = [("panel", "Open the admin panel", None), ("on", "Turn the bot on here", None), ("off", "Turn the bot off here", None), ("status", "Bot status", None),
-              ("provider", "Change the voice provider", "providers"), ("premium", "Premium voices", "premium"), ("users", "Manage listed users", None),
+              ("provider", "Change the voice provider", "providers"), ("users", "Manage listed users", None),
               ("approve", "Approve an access request", "owner"), ("deny", "Deny an access request", "owner"), ("admins", "List admins", "owner"), ("removeadmin", "Remove an admin", "owner")]
 
 async def help_cmd(update, ctx):
@@ -1312,15 +1311,6 @@ async def voices_cmd(update, ctx):
     if update.effective_chat.type != "private":  # never show voice lists or keyboards in groups
         return await say(update, "🎙 Voice selection is available in a private chat with me.")
     await update.effective_message.reply_text("🎙 Choose a voice:", reply_markup=voices_kb(update.effective_user.id))
-
-async def premium_cmd(update, ctx):
-    u = update.effective_user
-    if update.effective_chat.type != "private": return await say(update, "💎 Premium voices are available in a private chat with me.")
-    if not has_perm(u.id, "premium"): return await say(update, "⛔ Premium access required.")
-    vs = [v for v in lib() if v.get("access") == "premium" and v.get("enabled", True) and v.get("visible", True) and can_use_voice(u.id, v)]
-    if not vs: return await say(update, "No premium voices yet.")
-    await update.effective_message.reply_text("💎 Premium voices:", reply_markup=InlineKeyboardMarkup(
-        [[InlineKeyboardButton(f"{v['prov'].upper()} · {vlabel(v)}"[:60], callback_data=f"vs:{v['k']}")] for v in vs]))
 
 async def cb_voice(update, ctx):
     q = update.callback_query; u, c = q.from_user, q.message.chat
@@ -1556,7 +1546,6 @@ def main():
     H(CommandHandler("removeadmin", removeadmin_cmd)); H(CommandHandler("tts", tts_cmd))
     H(CallbackQueryHandler(cb_admin, pattern=r"^adm:(ok|no):\d+$"))
     H(CallbackQueryHandler(cb_voice, pattern=r"^v[mse]:"))
-    H(CommandHandler("premium", premium_cmd))
     H(MessageHandler(filters.ChatType.GROUPS & (filters.TEXT | filters.CAPTION) & ~filters.COMMAND, collect))
     app.add_error_handler(on_error)
     app.run_polling(allowed_updates=Update.ALL_TYPES, bootstrap_retries=-1)
