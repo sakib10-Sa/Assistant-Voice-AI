@@ -99,17 +99,30 @@ def load():
         except (OSError, json.JSONDecodeError):
             log.exception("Could not read database file %s", DB_FILE)
 
-def save():
+_sv = {"dirty": False, "h": None}
+
+def _write_db():
     try:
         db["_saved_at"] = time.time()
         DB_FILE.parent.mkdir(parents=True, exist_ok=True)
-        # Atomic replace prevents half-written JSON if Render restarts mid-save.
+        # Atomic replace prevents half-written JSON if the host restarts mid-save.
         tmp = DB_FILE.with_suffix(DB_FILE.suffix + ".tmp")
-        tmp.write_text(json.dumps(db, ensure_ascii=False, indent=1), "utf-8")
+        tmp.write_text(json.dumps(db, ensure_ascii=False, separators=(",", ":")), "utf-8")
         os.replace(tmp, DB_FILE)
     except OSError:
         log.exception("Could not save database file %s", DB_FILE)
-    backup["dirty"] = True
+
+def flush_save():
+    _sv["h"] = None
+    if _sv["dirty"]:
+        _sv["dirty"] = False; _write_db()
+
+def save():
+    """Coalesces bursts of changes into one disk write (at most every 1.5 s) so voice replies never wait on disk I/O."""
+    backup["dirty"] = True; _sv["dirty"] = True
+    if _sv["h"] is None:
+        try: _sv["h"] = asyncio.get_running_loop().call_later(1.5, flush_save)
+        except RuntimeError: flush_save()  # no event loop yet (start-up): write straight away
 
 async def restore(bot):
     """On start: if the pinned backup in BACKUP_CHAT is newer than the local file, use it."""
@@ -1515,10 +1528,12 @@ async def post_init(app):
 
 async def post_stop(app):
     app.bot_data["bg"].cancel(); app.bot_data["ka"].cancel()
+    flush_save()  # never lose the last second of changes
     try: await do_backup(app.bot)  # final snapshot before a Render redeploy/restart
     except Exception: log.exception("Final backup failed")
 
 async def post_shutdown(app):
+    flush_save()
     await app.bot_data["runner"].cleanup()
 
 def main():
