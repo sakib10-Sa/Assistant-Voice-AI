@@ -407,6 +407,11 @@ html.slow[data-th=light] nav .gl,html.slow[data-th=light] .drawer .gl,html.slow[
 #m .card{content-visibility:auto;contain-intrinsic-size:auto 150px}
 nav .gl{-webkit-backdrop-filter:blur(var(--gb,8px)) saturate(170%);backdrop-filter:blur(var(--gb,8px)) saturate(170%)}
 .sheet{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+/* ---- v22: clearer glass, search on the right, sidebar list fix ---- */
+.dl>*{flex:none}
+nav .gl,.drawer .gl,#mb .gl,#sr .gl,#sq .gl{background:linear-gradient(180deg,rgba(255,255,255,calc(.05*var(--gi,1))),rgba(255,255,255,0) 60%),rgba(255,255,255,var(--gt,0))}
+#scrim{background:rgba(0,0,0,.12);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+html[data-sp=right] #sq{left:62px;right:62px}
 </style></head>
 <body>
 <header id="hd" hidden><select id="chat"></select></header><div class="savebar" id="sb" hidden><span id="sv">Unsaved changes</span><button class="btn pri sm" onclick="saveNow()">Save</button></div>
@@ -570,7 +575,7 @@ load();
 /* ---- v4 helpers ---- */
 const ACC=[['Blue','10,132,255'],['Purple','191,90,242'],['Pink','255,55,95'],['Orange','255,159,10'],['Green','48,209,88'],['Teal','100,210,255']];
 const nameOf=u=>(S.admins||[]).find(a=>a.uid==u)?.name||(u==S.uid?'You':'Owner');
-const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('vb_pref')||'{}')}catch(e){}return{th:p.th||'dark',ac:p.ac||'10,132,255',fx:!!p.fx,gb:p.v>=5?p.gb:8,gt:p.v>=5?p.gt:4,gi:p.v>=5?p.gi:100,sr:p.sr!==false,ig:p.ig!==false,gbd:p.gbd!==false,rf:p.v>=5&&p.rf===true,ns:p.ns||'bubble',nl:p.nl||'float',sp:p.sp||'next',bg:p.bg||'default',ts:p.ts||100,m3d:p.m3d!==false,hp:p.hp!==false,v:5}})();
+const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('vb_pref')||'{}')}catch(e){}return{th:p.th||'dark',ac:p.ac||'10,132,255',fx:!!p.fx,gb:p.v>=6?p.gb:6,gt:p.v>=6?p.gt:0,gi:p.v>=6?p.gi:100,sr:p.sr!==false,ig:p.ig!==false,gbd:p.gbd!==false,rf:p.v>=6&&p.rf===true,ns:p.ns||'bubble',nl:p.nl||'float',sp:p.v>=6?(p.sp||'right'):'right',bg:p.bg||'default',ts:p.ts||100,m3d:p.m3d!==false,hp:p.hp!==false,v:6}})();
 const mq=window.matchMedia?matchMedia('(prefers-color-scheme: light)'):null;
 function applyPref(){const h=document.documentElement,l=PREF.th=='light'||(PREF.th=='system'&&mq&&mq.matches);h.dataset.th=l?'light':'dark';
   h.style.setProperty('--ac','rgb('+PREF.ac+')');h.style.setProperty('--acrgb',PREF.ac);h.classList.toggle('lite',PREF.fx);h.style.setProperty('--gb',PREF.gb+'px');h.style.setProperty('--gt',PREF.gt/100);h.style.setProperty('--gi',PREF.gi/100);h.classList.toggle('no-sr',!PREF.sr);h.classList.toggle('no-ig',!PREF.ig);h.classList.toggle('no-gb',!PREF.gbd);h.dataset.ns=PREF.ns;h.dataset.nl=PREF.nl;h.dataset.sp=PREF.sp;h.dataset.bg=PREF.bg;h.style.setProperty('--ts',PREF.ts/100);h.classList.toggle('no3d',!PREF.m3d||PREF.fx);
@@ -579,7 +584,7 @@ function persist(){try{localStorage.setItem('vb_pref',JSON.stringify(PREF))}catc
 const RM=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
 function setPref(k,v){const h=document.documentElement;PREF[k]=v;persist();if(k=='th'){h.classList.add('nt');applyPref();render();requestAnimationFrame(()=>requestAnimationFrame(()=>h.classList.remove('nt')))}else{applyPref();render();if(k=='nl')requestAnimationFrame(()=>{px=null;movePill()})}}
 let gtm,gq=0,gv={};function setGlass(k,v){PREF[k]=+v;gv[k]=v;if(!gq)gq=requestAnimationFrame(()=>{gq=0;const h=document.documentElement.style;h.setProperty('--gb',PREF.gb+'px');h.setProperty('--gt',PREF.gt/100);h.setProperty('--gi',PREF.gi/100);for(const q in gv){const e=$('#g_'+q);if(e)e.textContent=gv[q]+(q=='gb'?'px':'%')}gv={}});clearTimeout(gtm);gtm=setTimeout(persist,300)}
-function resetGlass(){Object.assign(PREF,{gb:8,gt:4,gi:100,sr:true,ig:true,gbd:true,rf:false});persist();applyPref();lgBuild();render();toast('Glass reset')}
+function resetGlass(){Object.assign(PREF,{gb:6,gt:0,gi:100,sr:true,ig:true,gbd:true,rf:false});persist();applyPref();lgBuild();render();toast('Glass reset')}
 function resetTune(){const s=C().s;['rate','pitch','volume'].forEach(k=>{if(s[k]!==0){s[k]=0;mark(k)}});render();toast('Tuning reset')}
 function gs(k,l,a,b,u){return `<div class="act" style="margin-top:12px;align-items:center"><span>${l}</span><span class="val" id="g_${k}">${PREF[k]}${u}</span></div><input type="range" min="${a}" max="${b}" value="${PREF[k]}" style="--p:${(PREF[k]-a)/(b-a)*100}%" oninput="sp(this);setGlass('${k}',this.value)">`}
 function vClose(){const s=$('#sh');if(s.hidden||s.classList.contains('out'))return;const h=s.innerHTML;if(RM()||PREF.fx){s.hidden=true;return}s.classList.add('out');setTimeout(()=>{s.classList.remove('out');if(s.innerHTML===h)s.hidden=true},180)}
@@ -692,7 +697,7 @@ function fpsTest(){const o=$('#fr'),t=[];o.className='res';o.textContent='Measur
     o.className='res '+(drop>t.length*.08?'bad':'ok');o.textContent=`≈${Math.round(1000/med)} Hz screen · ${(1000/avg).toFixed(0)} fps average · worst frame ${s[s.length-1].toFixed(0)} ms · ${drop} dropped of ${t.length}`}})(last)}
 
 /* ---- v13b: reset appearance, Escape closes popups ---- */
-function resetLook(){ask('Reset theme, accent, glass, layout, background and motion to defaults on this device?',()=>{Object.assign(PREF,{th:'dark',ac:'10,132,255',fx:false,gb:8,gt:4,gi:100,sr:true,ig:true,gbd:true,rf:false,ns:'bubble',nl:'float',sp:'next',bg:'default',ts:100,m3d:true,hp:true,v:5});persist();applyPref();render();requestAnimationFrame(()=>{px=null;movePill()});api('/api/prefs',{reset:true}).catch(()=>{});toast('Appearance reset')})}
+function resetLook(){ask('Reset theme, accent, glass, layout, background and motion to defaults on this device?',()=>{Object.assign(PREF,{th:'dark',ac:'10,132,255',fx:false,gb:6,gt:0,gi:100,sr:true,ig:true,gbd:true,rf:false,ns:'bubble',nl:'float',sp:'right',bg:'default',ts:100,m3d:true,hp:true,v:6});persist();applyPref();render();requestAnimationFrame(()=>{px=null;movePill()});api('/api/prefs',{reset:true}).catch(()=>{});toast('Appearance reset')})}
 addEventListener('keydown',e=>{if(e.key=='Escape'&&!$('#sh').hidden)vClose()});
 
 /* ---- v14: sidebar menu + TTS / STT sections ---- */
