@@ -222,7 +222,7 @@ def clean_lib(v):
         if not re.fullmatch(r"[0-9a-f]{8}", k) or k in seen:
             k = secrets.token_hex(4)
         if n and p in ("cartesia", "elevenlabs") and l in ("bn", "en") and ID_RE.match(i):
-            acc = "public" if str(x.get("access", "admin")) == "public" else "admin"  # access is Admins or Public; per-admin reference access lives in "allow"
+            acc = str(x.get("access", "admin")); acc = acc if acc in ("admin", "selected", "public") else "admin"  # selected = only the admins listed in "allow"
             allow = [int(u) for u in x.get("allow", []) if str(u).lstrip("-").isdigit()][:50]
             seen.add(k); out.append({"k": k, "name": n, "prov": p, "lang": l, "id": i, "access": acc, "visible": bool(x.get("visible", True)),
                                      "enabled": bool(x.get("enabled", True)), "model": str(x.get("model", ""))[:60], "allow": allow})
@@ -868,10 +868,15 @@ async def api_preview(req):
     s = {**DEFAULTS, **sanitize(b.get("s", {}))}
     pv = s.get("provider")
     need_p = ("cartesia", "elevenlabs") if pv == "both" else (pv,)
+    lg = b.get("lang") or s.get("lang") or "en"; lg = lg if lg in ("bn", "en") else "en"; forced = None
     if pv in ("both", "cartesia", "elevenlabs") and not any(has_perm(uid, p) for p in need_p):
-        s["provider"] = "edge"  # no access to API providers: Edge only
+        vid = s.get(f"{pv}_voice_{lg}") if pv in ("cartesia", "elevenlabs") else None
+        if vid and any(v["id"] == vid and v["prov"] == pv and can_use_voice(uid, v) for v in lib()):
+            forced = lg; s["lang"] = lg  # reference access: only this authorised voice, in this language
+        else:
+            s["provider"] = "edge"  # no provider access and no authorised voice: Edge only
     try:
-        audio, prov = await tts_full(str(b.get("text", "Hello"))[:1000], s, b.get("lang") or None)
+        audio, prov = await tts_full(str(b.get("text", "Hello"))[:1000], s, forced or b.get("lang") or None)
     except TTSFailure as exc:
         raise web.HTTPBadGateway(text=str(exc)[:240])
     except Exception as exc:
@@ -1146,7 +1151,7 @@ CMD_LIST = [("start", "Start", "user"), ("help", "Help", "user"), ("about", "Abo
             ("stats", "Statistics", "user"), ("request", "Request access", "user"), ("panel", "Admin panel", "admin"), ("on", "Bot on", "admin"),
             ("off", "Bot off", "admin"), ("status", "Bot status", "admin"), ("provider", "Provider", "admin"), ("lang", "Language", "admin"), ("speed", "Speed", "admin"),
             ("pitch", "Pitch", "admin"), ("volume", "Volume", "admin"), ("users", "Listed users", "admin"), ("adduser", "Add listed user", "admin"), ("deluser", "Remove listed user", "admin"),
-            ("onlylisted", "Only listed", "admin"), ("voice", "Voice settings", "admin")]
+            ("onlylisted", "Only listed", "admin"), ("voice", "Voice settings", "admin"), ("adminvoices", "Your provider voices", "admin")]
 CMD_NAMES = {c[0] for c in CMD_LIST}
 
 def cmd_enabled(name, ctype):
@@ -1176,7 +1181,7 @@ async def group_admin(update, ctx):
 
 USER_CMDS = [("tts", "Turn text into a voice message"), ("voices", "Choose a voice (private chat)"), ("voicepreset", "Voice style: normal, deep, robot, child, deep_robot"),
              ("replay", "Replay your last voice"), ("request", "Ask for admin access")]
-ADMIN_CMDS = [("panel", "Open the admin panel", None), ("on", "Turn the bot on here", None), ("off", "Turn the bot off here", None), ("status", "Bot status", None),
+ADMIN_CMDS = [("panel", "Open the admin panel", None), ("on", "Turn the bot on here", None), ("off", "Turn the bot off here", None), ("status", "Bot status", None), ("adminvoices", "Your ElevenLabs / Cartesia voices", "refs"),
               ("provider", "Change the voice provider", "providers"), ("users", "Manage listed users", None),
               ("approve", "Approve an access request", "owner"), ("deny", "Deny an access request", "owner"), ("admins", "List admins", "owner"), ("removeadmin", "Remove an admin", "owner")]
 
@@ -1184,7 +1189,7 @@ async def help_cmd(update, ctx):
     u, c = update.effective_user, update.effective_chat
     ok = lambda n: cmd_enabled(n, c.type) or u.id in OWNERS
     lines = ["SAKIB Lite — Voice Assistant", "", "User Commands"] + [f"/{n} — {d}" for n, d in USER_CMDS if ok(n) and not (n == "voices" and c.type != "private")]
-    adm = [f"/{n} — {d}" for n, d, p in ADMIN_CMDS if is_staff(u.id) and ok(n) and (p is None or (u.id in OWNERS if p == "owner" else has_perm(u.id, p)))]
+    adm = [f"/{n} — {d}" for n, d, p in ADMIN_CMDS if is_staff(u.id) and ok(n) and (p is None or (u.id in OWNERS if p == "owner" else bool(admin_voices(u.id)) if p == "refs" else has_perm(u.id, p)))]
     if adm: lines += ["", "Admin Commands"] + adm
     await say(update, "\n".join(lines))
 
@@ -1325,6 +1330,19 @@ async def voices_cmd(update, ctx):
         return await say(update, "🎙 Voice selection is available in a private chat with me.")
     await update.effective_message.reply_text("🎙 Choose a voice:", reply_markup=voices_kb(update.effective_user.id))
 
+def admin_voices(uid):
+    return [v for v in lib() if v.get("enabled", True) and can_use_voice(uid, v)]
+
+async def adminvoices_cmd(update, ctx):
+    """The ElevenLabs / Cartesia voices this admin was allowed to use (owner: all). Server-side filtered."""
+    u = update.effective_user
+    if update.effective_chat.type != "private": return await say(update, "🔒 Open a private chat with me to see your provider voices.")
+    if not is_staff(u.id): return await say(update, "⛔ This command is for admins.")
+    vs = admin_voices(u.id)
+    if not vs: return await say(update, "No ElevenLabs or Cartesia voices are shared with you yet. Ask the owner to allow one.")
+    await update.effective_message.reply_text("🔒 Your ElevenLabs / Cartesia voices:", reply_markup=InlineKeyboardMarkup(
+        [[InlineKeyboardButton(f"{v['prov'].upper()} · {vlabel(v)}"[:60], callback_data=f"vs:{v['k']}")] for v in vs]))
+
 async def cb_voice(update, ctx):
     q = update.callback_query; u, c = q.from_user, q.message.chat
     if c.type != "private": return await q.answer("Voice selection works in a private chat only", show_alert=True)
@@ -1334,14 +1352,14 @@ async def cb_voice(update, ctx):
             await q.answer(); return await q.edit_message_reply_markup(voices_kb(u.id, int(p[1])))
         if p[0] == "vs":
             v = next(x for x in lib() if x["k"] == p[1])
-            if not (can_use_voice(u.id, v) and v.get("visible", True)): return await q.answer("This voice is not available to you", show_alert=True)
+            if not can_use_voice(u.id, v) or (not v.get("visible", True) and not is_staff(u.id)): return await q.answer("This voice is not available to you", show_alert=True)
             kw, name = {v["prov"] + "_voice_" + v["lang"]: v["id"], "provider": v["prov"]}, f"{v['prov'].upper()} · {vlabel(v)}"
         else:
             e = ALL_EDGE[int(p[1])]; kw, name = {"voice_" + e[:2]: e, "provider": "edge"}, elabel(e)
     except (IndexError, KeyError, ValueError, StopIteration):
         return await q.answer("The list changed. Send /voices again.", show_alert=True)
     clean = sanitize(kw)
-    if is_staff(u.id): db.setdefault("global_settings", {}).update(clean)
+    if is_staff(u.id) and (p[0] != "vs" or u.id in OWNERS): db.setdefault("global_settings", {}).update(clean)  # provider voices picked by non-owner admins stay personal
     else: db.setdefault("users", {}).setdefault(str(u.id), {}).update(clean)
     save(); await q.answer("Saved ✓")
     try: await q.edit_message_text(f"✅ Voice set: {name}", reply_markup=None)  # removes the whole keyboard
@@ -1561,6 +1579,7 @@ def main():
     H(CommandHandler("removeadmin", removeadmin_cmd)); H(CommandHandler("tts", tts_cmd))
     H(CallbackQueryHandler(cb_admin, pattern=r"^adm:(ok|no):\d+$"))
     H(CallbackQueryHandler(cb_voice, pattern=r"^v[mse]:"))
+    H(CommandHandler("adminvoices", adminvoices_cmd))
     H(MessageHandler(filters.ChatType.GROUPS & (filters.TEXT | filters.CAPTION) & ~filters.COMMAND, collect))
     app.add_error_handler(on_error)
     app.run_polling(allowed_updates=Update.ALL_TYPES, bootstrap_retries=-1)

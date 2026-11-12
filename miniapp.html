@@ -412,6 +412,21 @@ nav .gl{-webkit-backdrop-filter:blur(var(--gb,8px)) saturate(170%);backdrop-filt
 nav .gl,.drawer .gl,#mb .gl,#sr .gl,#sq .gl{background:linear-gradient(180deg,rgba(255,255,255,calc(.05*var(--gi,1))),rgba(255,255,255,0) 60%),rgba(255,255,255,var(--gt,0))}
 #scrim{background:rgba(0,0,0,.12);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 html[data-sp=right] #sq{left:62px;right:62px}
+/* ---- v23: text-to-speech layout ---- */
+.card>textarea.big{font:inherit;font-size:15px;line-height:1.45;font-weight:400;letter-spacing:0;color:var(--tx);min-height:120px;margin:0}
+textarea::placeholder{font-size:15px;font-weight:400}
+.pp{display:flex;gap:8px}.pp button{flex:1;min-width:0;border:1px solid var(--hair);background:var(--fill);color:var(--tx);border-radius:10px;font:inherit;font-weight:600;font-size:14px;padding:9px 6px;min-height:40px;transition:background .2s,border-color .2s,color .2s}
+.pp button.on{background:var(--ac);border-color:var(--ac);color:#fff}.pp.sm button{min-height:34px;font-size:13px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:380px){.fg2{grid-template-columns:1fr}}
+.fl2{display:block;font-size:12px;color:var(--mut);margin:14px 0 6px;font-weight:500}
+.notice{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;background:rgba(255,159,10,.12);color:#ffb340;font-size:13px;margin-top:10px}
+.tbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}.tbar .btn.pri{min-width:130px}
+.aur{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}.aur audio{flex:1;min-width:200px;margin:0}
+/* ---- v23: TTS page layout ---- */
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tts .l,.fr2 .l{display:block;margin:12px 0 4px;font-size:12px;color:var(--mut);font-weight:500}
+.emptyrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;background:var(--fill);font-size:14px;color:var(--mut)}
+textarea.ta{min-height:110px;resize:vertical;font-size:15px;line-height:1.45;font-weight:400;color:var(--tx)}
+.tts .rg button{padding:5px 9px}
 </style></head>
 <body>
 <header id="hd" hidden><select id="chat"></select></header><div class="savebar" id="sb" hidden><span id="sv">Unsaved changes</span><button class="btn pri sm" onclick="saveNow()">Save</button></div>
@@ -717,21 +732,23 @@ V.vsel=function(){const t=document.createElement('template');t.innerHTML=_vv();c
 const MOD=()=>S.models||{el_tts:['eleven_multilingual_v2'],ca_tts:['sonic-3.6'],el_stt:['scribe_v2'],ca_stt:['ink-whisper']};
 const mseg=(cur,opts,fn)=>`<div class="seg${opts.length==2?' two':''}">${opts.map(([v,t])=>`<button class="${cur==v?'on':''}" onclick="${fn}('${v}')">${t}</button>`).join('')}</div>`;
 let TS={prov:'elevenlabs',lang:'en',text:''},ST={prov:'elevenlabs',lang:'',file:null,busy:0,text:'',meta:''};
-V.tts=function(){const s=C().s,M=MOD(),lib=(S.voice_lib||[]).filter(v=>v.prov==TS.prov&&v.lang==TS.lang),cur=TS.prov=='edge'?s['voice_'+TS.lang]:s[TS.prov+'_voice_'+TS.lang];
-  const vo=TS.prov=='edge'?(S.voices[TS.lang]||[]).map(v=>[v,vname(v)]):lib.map(v=>[v.id,vl(v)]);
-  return `<div class="bento"><div class="card s4"><h4>Text to Speech</h4>${mseg(TS.prov,[['elevenlabs','ElevenLabs'],['cartesia','Cartesia'],['edge','Edge']],'ttsP')}
-  <div style="height:10px"></div>${mseg(TS.lang,[['bn','Bangla'],['en','English']],'ttsL')}
-  ${TS.prov=='elevenlabs'?sel('el_tts_model','Model',M.el_tts.map(x=>[x,x])):TS.prov=='cartesia'?sel('ca_tts_model','Model',M.ca_tts.map(x=>[x,x])):''}
-  <label class="l" for="tv">Voice</label><select id="tv">${vo.map(([v,n])=>`<option value="${esc(v)}" ${v==cur?'selected':''}>${esc(n)}</option>`).join('')||'<option value="">No voice for this language. Add one in Voices &amp; IDs.</option>'}</select>
-  <label class="l" for="tt">Text</label><textarea id="tt" class="big" maxlength="1000" placeholder="Type or paste text (up to 1000 characters)">${esc(TS.text)}</textarea>
-  <div class="act" style="align-items:center;margin-top:10px"><span class="mut" id="tc">${TS.text.length}/1000</span><button class="btn pri" id="tg" onclick="ttsGo()">Generate</button></div><div id="to"></div><div id="tr" class="res" style="display:none"></div></div>
-  ${TS.prov=='elevenlabs'?`<div class="card s4"><div class="act" style="align-items:center"><h4>ElevenLabs credits</h4><button class="btn sm ghost" onclick="credCheck()">Check</button></div><div id="cr" class="res">Tap Check to read your real balance from ElevenLabs.</div></div>`:''}</div>`};
+V.tts=function(){const s=C().s,M=MOD(),lib=(S.voice_lib||[]).filter(v=>v.prov==TS.prov&&v.lang==TS.lang&&v.enabled!==false),cur=TS.prov=='edge'?s['voice_'+TS.lang]:s[TS.prov+'_voice_'+TS.lang];
+  const vo=TS.prov=='edge'?(S.voices[TS.lang]||[]).map(v=>[v,vname(v)]):lib.map(v=>[v.id,vl(v)]),mdl=TS.prov=='elevenlabs'?['el_tts_model',M.el_tts]:TS.prov=='cartesia'?['ca_tts_model',M.ca_tts]:null;
+  return `<div class="bento"><div class="card s4 tts"><div class="act" style="align-items:center"><h4 style="margin:0">Text to speech</h4><div class="rg">${[['elevenlabs','ElevenLabs'],['cartesia','Cartesia'],['edge','Edge']].map(([v,t])=>`<button class="${TS.prov==v?'on':''}" onclick="ttsP('${v}')">${t}</button>`).join('')}</div></div>
+  <div class="fr2"><div><label class="l" for="tl">Language</label><select id="tl" onchange="ttsL(this.value)"><option value="en" ${TS.lang=='en'?'selected':''}>English · ENG</option><option value="bn" ${TS.lang=='bn'?'selected':''}>Bangla · BN</option></select></div>
+  ${mdl?`<div><label class="l" for="tm">Model</label><select id="tm" onchange="set('${mdl[0]}',this.value)">${mdl[1].map(x=>`<option ${s[mdl[0]]==x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>`:'<div></div>'}</div>
+  <label class="l" for="tv">Voice</label>${vo.length?`<select id="tv">${vo.map(([v,n])=>`<option value="${esc(v)}" ${v==cur?'selected':''}>${esc(n)}</option>`).join('')}</select>`:`<div class="emptyrow"><span>No ${TS.lang=='bn'?'Bangla':'English'} voice for ${esc(PN[TS.prov]||TS.prov)}</span><button class="btn sm" onclick="vSheet('')">Add voice</button></div><input type="hidden" id="tv" value="">`}
+  <label class="l" for="tt">Text</label><textarea id="tt" class="ta" maxlength="1000" placeholder="Type or paste text to speak">${esc(TS.text)}</textarea>
+  <div class="act" style="align-items:center;margin-top:6px"><span class="mut" id="tc">${TS.text.length}/1000</span><button class="btn sm ghost" onclick="ttsClear()">Clear</button></div>
+  <button class="btn pri" id="tg" style="width:100%;margin-top:10px" onclick="ttsGo()">Generate voice</button><div id="to"></div><div id="tr" class="res" style="display:none"></div></div>
+  ${TS.prov=='elevenlabs'?`<div class="card s4"><div class="act" style="align-items:center"><h4 style="margin:0">ElevenLabs credits</h4><button class="btn sm ghost" onclick="credCheck()">Check</button></div><div id="cr" class="res" style="margin-top:10px">Tap Check to read your real balance from ElevenLabs.</div></div>`:''}</div>`};
+function ttsClear(){TS.text='';const t=$('#tt');if(t)t.value='';const c=$('#tc');if(c)c.textContent='0/1000'}
 function ttsP(v){TS.text=($('#tt')||{}).value||TS.text;TS.prov=v;render()}function ttsL(v){TS.text=($('#tt')||{}).value||TS.text;TS.lang=v;render()}
 document.addEventListener('input',e=>{if(e.target.id=='tt'){TS.text=e.target.value;$('#tc').textContent=e.target.value.length+'/1000'}});
 async function ttsGo(){const t=$('#tt').value.trim(),r=$('#tr');if(!t)return toast('Type some text',1);TS.text=t;const s={...C().s,provider:TS.prov,lang:TS.lang},v=$('#tv').value;
   if(TS.prov=='edge')s['voice_'+TS.lang]=v;else s[TS.prov+'_voice_'+TS.lang]=v;
   const b=$('#tg');b.disabled=true;b.classList.add('ld');r.style.display='none';
-  try{const x=await api('/api/preview',{s,text:t,lang:TS.lang},1),u=URL.createObjectURL(await x.blob());AU={tok:x.headers.get('X-Audio-Token'),blob:u,prov:x.headers.get('X-TTS-Provider')||TS.prov};$('#to').innerHTML=`<audio controls autoplay src="${u}"></audio><button class="btn sm ghost" style="margin-top:10px" onclick="dlAudio()">Download MP3</button>`}
+  try{const x=await api('/api/preview',{s,text:t,lang:TS.lang},1),u=URL.createObjectURL(await x.blob());AU={tok:x.headers.get('X-Audio-Token'),blob:u,prov:x.headers.get('X-TTS-Provider')||TS.prov};$('#to').innerHTML=`<audio controls autoplay src="${u}"></audio><button class="btn sm ghost" onclick="dlAudio()">Download MP3</button>`}
   catch(e){r.style.display='';r.className='res bad';r.textContent=(e.message||'Failed').slice(0,240)}b.disabled=false;b.classList.remove('ld')}
 async function credCheck(){const e=$('#cr');e.className='res';e.textContent='Checking…';try{const j=(await api('/api/credits')).elevenlabs||{};
   if(j.error){e.className='res bad';e.textContent=j.error}else{const p=j.limit?Math.round(j.used/j.limit*100):0;e.className='res ok';e.innerHTML=`<b>${j.left.toLocaleString()}</b> of ${j.limit.toLocaleString()} credits left · ${esc(j.tier||'')}<div class="bar"><i style="width:${p}%"></i></div>`}}catch(x){e.className='res bad';e.textContent='Could not check'}}
@@ -746,7 +763,7 @@ V.stt=function(){const M=MOD(),f=ST.file;
   <div class="hint">Up to 40 MB. Video files work with ElevenLabs; Cartesia accepts mp3, wav, m4a, mp4, webm, ogg and flac.</div>
   <button class="btn pri" id="sg" style="width:100%;margin-top:12px" onclick="sttRun()">Transcribe</button>
   <div class="bar" id="sbr" hidden><i></i></div><div id="sst" class="res" style="display:none"></div></div>
-  ${ST.text?`<div class="card s4"><div class="act" style="align-items:center"><h4>Transcript</h4><span class="mut">${esc(ST.meta)}</span></div><textarea id="so" class="big" oninput="ST.text=this.value">${esc(ST.text)}</textarea>
+  ${ST.text?`<div class="card s4"><div class="act" style="align-items:center"><h4>Transcript</h4><span class="mut">${esc(ST.meta)}</span></div><textarea id="so" class="ta" oninput="ST.text=this.value">${esc(ST.text)}</textarea>
   <div class="g g2" style="margin-top:10px"><button class="btn sm ghost" onclick="sttCopy()">Copy</button><button class="btn sm ghost" onclick="sttSave()">Download .txt</button></div></div>`:''}</div>`};
 function sttP(v){ST.prov=v;render()}
 function sttFile(f){if(!f)return;ST.file=f;const e=$('#sfi');e.hidden=false;e.innerHTML=`<b>${esc(f.name)}</b><small>${(f.size/1048576).toFixed(1)} MB</small>`}
@@ -821,7 +838,7 @@ function perfProbe(){const r=document.documentElement,t=[];let l=performance.now
 setTimeout(perfProbe,1500);setTimeout(perfProbe,6000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(perfProbe,800)});
 
 /* ---- v20: voice library rows + editor ---- */
-const I_EDIT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',I_DEL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',ACL={admin:'Admins',public:'Public'},VAH={admin:'Admins with access to this provider can use the voice.',public:'Anyone can pick this voice in /voices (MORE+) and in the panel.'};
+const I_EDIT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',I_DEL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',ACL={admin:'Admins',selected:'Selected',public:'Public'},VAH={admin:'Admins with access to this provider can use the voice.',selected:'Only the admins you switch on under Reference access (and you) can use it.',public:'Anyone can pick this voice in /voices (MORE+) and in the panel.'};
 function libRows(){return (S.voice_lib||[]).map(v=>{const on=inUse(v),ra=(v.allow||[]).length;
   return `<div class="vr"><div class="vm"><div class="vt"><b>${esc(v.name)}</b><span class="chip lg">${v.lang=='bn'?'BN':'ENG'}</span>${on?'<span class="tag ok">In use</span>':''}</div><div class="vc"><span class="chip">${esc(v.prov)}</span><span class="chip">${ACL[v.access]||'Admins'}</span>${ra?`<span class="chip">Ref · ${ra}</span>`:''}${v.enabled===false?'<span class="chip off">Disabled</span>':''}${v.visible===false?'<span class="chip off">Hidden</span>':''}</div><div class="vid">${esc(v.id.slice(0,18))}${v.id.length>18?'…':''}</div></div>
   <div class="va"><button class="btn sm use ${on?'on':''}" onclick="useV('${v.k}')">${on?'In use':'Use'}</button><button class="btn sm ib" aria-label="Edit voice" onclick="vSheet('${v.k}')">${I_EDIT}</button><button class="btn sm ib red" aria-label="Delete voice" onclick="delV('${v.k}')">${I_DEL}</button></div></div>`}).join('')}
@@ -835,7 +852,7 @@ function vSheetNew(k){const v=VK(k)||{},own=S.role=='owner',ac=v.access||'admin'
   <div class="fr"><div><label class="l" for="vp">Provider</label><select id="vp" onchange="vpChg()"><option value="cartesia" ${v.prov!='elevenlabs'?'selected':''}>Cartesia</option><option value="elevenlabs" ${v.prov=='elevenlabs'?'selected':''}>ElevenLabs</option></select></div>
   <div><label class="l" for="vl">Language</label><select id="vl"><option value="bn" ${v.lang=='bn'?'selected':''}>Bangla · BN</option><option value="en" ${v.lang!='bn'?'selected':''}>English · ENG</option></select></div></div>
   <label class="l" for="vmd">Model <span style="opacity:.7">· optional</span></label><select id="vmd">${vmOpts(v.prov||'cartesia',v.model)}</select>
-  ${own?`<div class="sec"><h5>Access</h5><div class="seg two" id="vacs">${[['admin','Admins'],['public','Public']].map(([x,t])=>`<button type="button" data-v="${x}" class="${ac==x?'on':''}" onclick="vAcc('${x}')">${t}</button>`).join('')}</div><input type="hidden" id="vac" value="${ac}"><div class="hint" id="vach">${VAH[ac]}</div></div>
+  ${own?`<div class="sec"><h5>Access</h5><div class="seg" id="vacs">${[['admin','Admins'],['selected','Selected'],['public','Public']].map(([x,t])=>`<button type="button" data-v="${x}" class="${ac==x?'on':''}" onclick="vAcc('${x}')">${t}</button>`).join('')}</div><input type="hidden" id="vac" value="${ac}"><div class="hint" id="vach">${VAH[ac]}</div></div>
   <div class="sec"><h5>Reference access</h5><div class="hint" style="margin:0 0 6px">Allow a specific admin to use this voice even without full provider access.</div>${(S.admins||[]).map(a=>`<div class="row" style="padding:0"><span>${esc(a.name||'Admin')} <span class="mut">${a.uid}</span></span><label class="sw"><input type="checkbox" class="vaw" value="${a.uid}" ${(v.allow||[]).includes(+a.uid)?'checked':''}><i></i></label></div>`).join('')||'<div class="mut">No admins yet</div>'}</div>
   <div class="sec"><h5>Status</h5><div class="row" style="padding:0"><span>Enabled</span><label class="sw"><input type="checkbox" id="ven" ${v.enabled===false?'':'checked'}><i></i></label></div><div class="row" style="padding:0"><span>Visible in lists</span><label class="sw"><input type="checkbox" id="vvi" ${v.visible===false?'':'checked'}><i></i></label></div></div>`:''}
   <div class="g g2" style="margin-top:16px"><button class="btn" onclick="vClose()">Cancel</button><button class="btn pri" onclick="vSave('${k||''}')">Save</button></div></div>`;$('#sh').hidden=false}
