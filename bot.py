@@ -15,7 +15,7 @@ from urllib.parse import parse_qsl
 import edge_tts
 import aiohttp
 from aiohttp import web
-from telegram import (BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, InputFile,
+from telegram import (BotCommand, BotCommandScopeAllChatAdministrators, BotCommandScopeAllGroupChats, BotCommandScopeAllPrivateChats, BotCommandScopeChat, InlineKeyboardButton, InlineKeyboardMarkup, InputFile,
                       InputMediaDocument, MenuButtonWebApp, ReplyParameters, Update, WebAppInfo)
 from telegram.ext import (ApplicationBuilder, CallbackQueryHandler, CommandHandler, ContextTypes,
                           MessageHandler, filters)
@@ -681,8 +681,9 @@ async def make_request(bot, uid, name, username):
 async def decide(bot, uid, ok):
     r = db.get("requests", {}).pop(str(uid), None)
     if ok:
-        db.setdefault("admins", {})[str(uid)] = {"name": (r or {}).get("name", ""), "username": (r or {}).get("username", ""), "ts": int(time.time())}
+        db.setdefault("admins", {})[str(uid)] = {"name": (r or {}).get("name", ""), "username": (r or {}).get("username", ""), "ts": int(time.time()), "tier": "basic"}
     save()
+    if ok: refresh_soon()
     try: await bot.send_message(uid, "✅ Access approved. Send /panel to open the control panel." if ok else "❌ Access request denied.")
     except Exception: pass
 
@@ -926,8 +927,12 @@ async def api_prefs(req):
 async def api_cmds(req):
     await need(req, owner=True)
     b = await req.json()
-    if b.get("side") not in ("group", "private") or b.get("cmd") not in CMD_NAMES: raise web.HTTPBadRequest()
-    db.setdefault("cmdcfg", {}).setdefault(b["side"], {})[b["cmd"]] = bool(b.get("on")); save()
+    if b.get("side") not in ("group", "private") or (b.get("cmd") != "*" and b.get("cmd") not in CMD_NAMES): raise web.HTTPBadRequest()
+    cf = db.setdefault("cmdcfg", {}).setdefault(b["side"], {})
+    if b["cmd"] == "*":  # bulk: everything except the basics people need to find their way
+        for n in CMD_NAMES - {"start", "help", "request", "about"}: cf[n] = bool(b.get("on"))
+    else: cf[b["cmd"]] = bool(b.get("on"))
+    save(); await refresh_commands(req.app["bot"])
     return web.json_response({"cfg": db["cmdcfg"]})
 
 async def api_primary(req):
@@ -967,6 +972,7 @@ async def api_admin(req):
         db.get("admins", {}).pop(str(uid), None)
         for n in [n for n, v in db.get("creds", {}).items() if v["uid"] == uid]: db["creds"].pop(n)
         save()
+    if a in ("add", "perms", "remove"): refresh_soon()  # the admin's own "/" menu follows their permissions
     return web.json_response({"ok": True})
 
 import struct as _st, hashlib as _hl
@@ -1151,8 +1157,70 @@ CMD_LIST = [("start", "Start", "user"), ("help", "Help", "user"), ("about", "Abo
             ("stats", "Statistics", "user"), ("request", "Request access", "user"), ("panel", "Admin panel", "admin"), ("on", "Bot on", "admin"),
             ("off", "Bot off", "admin"), ("status", "Bot status", "admin"), ("provider", "Provider", "admin"), ("lang", "Language", "admin"), ("speed", "Speed", "admin"),
             ("pitch", "Pitch", "admin"), ("volume", "Volume", "admin"), ("users", "Listed users", "admin"), ("adduser", "Add listed user", "admin"), ("deluser", "Remove listed user", "admin"),
-            ("onlylisted", "Only listed", "admin"), ("voice", "Voice settings", "admin"), ("adminvoices", "Your provider voices", "admin")]
+            ("onlylisted", "Only listed", "admin"), ("voice", "Voice settings", "admin"), ("adminvoices", "Your provider voices", "admin"),
+            ("clear", "Clear the queue", "admin"), ("approve", "Approve a request", "admin"), ("deny", "Deny a request", "admin"), ("admins", "List admins", "admin"), ("removeadmin", "Remove an admin", "admin")]
 CMD_NAMES = {c[0] for c in CMD_LIST}
+
+# Short Bangla text for Telegram's "/" menu, and the explanation shown by /help ((text, is_critical)).
+CMD_BN = {"start": "শুরু করুন", "help": "ব্যবহারের নিয়ম (টিউটোরিয়াল)", "about": "বট সম্পর্কে", "tts": "লেখা থেকে ভয়েস বানান", "voices": "ভয়েস বেছে নিন",
+          "voicepreset": "ভয়েসের স্টাইল বদলান", "replay": "শেষ ভয়েস আবার শুনুন", "history": "আগের ভয়েসের তালিকা", "favs": "প্রিয় ভয়েস", "fav": "ভয়েস প্রিয় করুন",
+          "stats": "পরিসংখ্যান", "request": "প্যানেল অ্যাক্সেস চান", "panel": "কন্ট্রোল প্যানেল খুলুন", "on": "এই চ্যাটে বট চালু", "off": "এই চ্যাটে বট বন্ধ",
+          "status": "বটের অবস্থা", "provider": "ভয়েস প্রোভাইডার বদলান", "lang": "ভাষা ঠিক করুন", "speed": "কথার গতি", "pitch": "ভয়েসের পিচ", "volume": "ভলিউম",
+          "users": "লিস্টেড ইউজার দেখুন", "adduser": "লিস্টে ইউজার যোগ", "deluser": "লিস্ট থেকে ইউজার সরান", "onlylisted": "শুধু লিস্টেডদের উত্তর",
+          "voice": "ভয়েস সেটিংস", "adminvoices": "আপনার ElevenLabs/Cartesia ভয়েস", "clear": "অপেক্ষার সারি খালি করুন", "approve": "অনুরোধ অনুমোদন (মালিক)",
+          "deny": "অনুরোধ বাতিল (মালিক)", "admins": "অ্যাডমিন তালিকা (মালিক)", "removeadmin": "অ্যাডমিন সরান (মালিক)"}
+HELP_BN = {
+    "tts": ("লেখা থেকে ভয়েস মেসেজ বানায়। যেমন: /tts আমি ভালো আছি — অথবা কোনো মেসেজে রিপ্লাই দিয়ে শুধু /tts লিখুন।", False),
+    "voices": ("ভয়েস বেছে নিন (শুধু প্রাইভেট চ্যাটে)। ✅ মানে এখন যেটা চলছে। আরও ভয়েস দেখতে MORE+ চাপুন। বেছে নিলে বোতামগুলো সরে যায়।", False),
+    "voicepreset": ("ভয়েসের স্টাইল বদলায়: normal, deep, robot, child, deep_robot। যেমন: /voicepreset deep", False),
+    "replay": ("আপনার শেষ ভয়েসটি আবার পাঠায়।", False), "history": ("আপনার আগের ভয়েসগুলোর তালিকা দেখায়।", False),
+    "favs": ("আপনার প্রিয় ভয়েসগুলো দেখায়।", False), "fav": ("একটি ভয়েসকে প্রিয় তালিকায় রাখে।", False),
+    "stats": ("এ পর্যন্ত কতগুলো ভয়েস বানানো হয়েছে তার হিসাব দেখায়।", False), "request": ("প্যানেল বা অ্যাডমিন অ্যাক্সেসের জন্য অনুরোধ পাঠায়।", False),
+    "about": ("বটটি সম্পর্কে সংক্ষিপ্ত তথ্য।", False), "help": ("এই টিউটোরিয়ালটি দেখায়।", False),
+    "panel": ("কন্ট্রোল প্যানেল (Mini App) খোলে। শুধু প্রাইভেট চ্যাটে।", False),
+    "on": ("এই চ্যাটে বট চালু করে — আবার ভয়েস আসবে।", False),
+    "off": ("এই চ্যাটে বট বন্ধ করে — আর কোনো ভয়েস আসবে না। (প্যানেলের Bot status সুইচের মতোই কাজ করে)", True),
+    "status": ("বট এখন চালু না বন্ধ এবং কোন প্রোভাইডার ঠিক আছে তা দেখায়।", False),
+    "provider": ("ভয়েস প্রোভাইডার বদলায়: auto, edge, elevenlabs, cartesia। ভুল বাছলে ভয়েস নাও আসতে পারে।", True),
+    "lang": ("ভাষা ঠিক করে: auto, bn বা en।", False), "speed": ("কথা বলার গতি বদলায়।", False), "pitch": ("ভয়েসের সুর (পিচ) বদলায়। শুধু Edge ভয়েসে কাজ করে।", False),
+    "volume": ("ভয়েসের ভলিউম বদলায়।", False), "users": ("লিস্টেড ইউজারদের তালিকা। 'শুধু লিস্টেড' চালু থাকলে এদের মেসেজেই ভয়েস আসে।", False),
+    "adduser": ("লিস্টে নতুন ইউজার যোগ করে (কত সেকেন্ড পর ভয়েস যাবে তাও ঠিক করা যায়)। বিস্তারিত প্যানেলের Targets-এ।", False),
+    "deluser": ("লিস্ট থেকে ইউজার সরায়।", False), "onlylisted": ("চালু থাকলে শুধু লিস্টেড ইউজারদের মেসেজে ভয়েস আসে।", False),
+    "voice": ("এই চ্যাটের ভয়েস সেটিংস দেখায় ও বদলায়।", False), "adminvoices": ("আপনার জন্য অনুমোদিত ElevenLabs / Cartesia ভয়েসের বোতাম। প্রাইভেট চ্যাটে।", False),
+    "clear": ("অপেক্ষায় থাকা ভয়েসগুলো মুছে ফেলে।", True), "approve": ("অ্যাক্সেস অনুরোধ অনুমোদন করে (শুধু মালিক): /approve <user_id>", True),
+    "deny": ("অ্যাক্সেস অনুরোধ বাতিল করে (শুধু মালিক)।", False), "admins": ("অ্যাডমিনদের তালিকা দেখায় (শুধু মালিক)।", False),
+    "removeadmin": ("অ্যাডমিন সরায় (শুধু মালিক): /removeadmin <user_id>", True)}
+GROUP_MENU_ADMIN = ("on", "off", "status", "lang", "speed", "pitch", "volume", "users", "adduser", "deluser", "onlylisted", "voice", "clear")
+
+def admin_allowed(uid, n):
+    """Is this admin command available to this person? Same rules /help and the Telegram menu use."""
+    p = {c[0]: c[2] for c in ADMIN_CMDS}.get(n)
+    if not is_staff(uid): return False
+    if p is None: return True
+    if p == "owner": return uid in OWNERS
+    if p == "refs": return bool(admin_voices(uid))
+    return has_perm(uid, p)
+
+async def refresh_commands(bot):
+    """Makes Telegram's "/" menu follow the owner's command switches: per chat type, and per admin."""
+    cf = db.get("cmdcfg", {}); ok = lambda n, side: cf.get(side, {}).get(n, True)
+    mk = lambda n: BotCommand(n, CMD_BN.get(n, n)[:200])
+    user = lambda side: [mk(n) for n, d, k in CMD_LIST if k == "user" and ok(n, side) and not (n == "voices" and side == "group")]
+    try:
+        await bot.set_my_commands(user("private"))
+        await bot.set_my_commands(user("private"), scope=BotCommandScopeAllPrivateChats())
+        await bot.set_my_commands(user("group"), scope=BotCommandScopeAllGroupChats())
+        await bot.set_my_commands(user("group") + [mk(n) for n in GROUP_MENU_ADMIN if ok(n, "group")], scope=BotCommandScopeAllChatAdministrators())
+        for uid in {*OWNERS, *[int(k) for k in db.get("admins", {})]}:
+            cmds = user("private") + [mk(n) for n, d, k in CMD_LIST if k == "admin" and ok(n, "private") and admin_allowed(uid, n)]
+            try: await bot.set_my_commands(cmds[:100], scope=BotCommandScopeChat(uid))
+            except Exception: pass  # that admin has not started the bot yet
+    except Exception:
+        log.exception("Could not update the Telegram command menu")
+
+def refresh_soon():
+    bt = app_ref.get("bot")
+    if bt: asyncio.create_task(refresh_commands(bt))
 
 def cmd_enabled(name, ctype):
     return db.get("cmdcfg", {}).get("private" if ctype == "private" else "group", {}).get(name, True)
@@ -1160,7 +1228,9 @@ def cmd_enabled(name, ctype):
 def guarded(name, fn):
     async def g(update, ctx):
         c, u = update.effective_chat, update.effective_user
-        if c and u and u.id not in OWNERS and not cmd_enabled(name, c.type): return  # disabled for this chat type
+        if c and u and u.id not in OWNERS and not cmd_enabled(name, c.type):  # switched off by the owner for this chat type
+            if c.type == "private": await update.effective_message.reply_text("⛔ এই কমান্ডটি এখন বন্ধ করা আছে। /help দিয়ে চালু কমান্ডগুলো দেখুন।")
+            return
         return await fn(update, ctx)
     return g
 
@@ -1188,18 +1258,22 @@ ADMIN_CMDS = [("panel", "Open the admin panel", None), ("on", "Turn the bot on h
 async def help_cmd(update, ctx):
     u, c = update.effective_user, update.effective_chat
     ok = lambda n: cmd_enabled(n, c.type) or u.id in OWNERS
-    lines = ["SAKIB Lite — Voice Assistant", "", "User Commands"] + [f"/{n} — {d}" for n, d in USER_CMDS if ok(n) and not (n == "voices" and c.type != "private")]
-    adm = [f"/{n} — {d}" for n, d, p in ADMIN_CMDS if is_staff(u.id) and ok(n) and (p is None or (u.id in OWNERS if p == "owner" else bool(admin_voices(u.id)) if p == "refs" else has_perm(u.id, p)))]
-    if adm: lines += ["", "Admin Commands"] + adm
+    line = lambda n: ("⚠️ " if HELP_BN.get(n, ("", 0))[1] else "") + f"/{n} — {HELP_BN.get(n, (CMD_BN.get(n, ''), 0))[0]}"
+    lines = ["🎙 SAKIB Lite — ভয়েস অ্যাসিস্ট্যান্ট", "লেখাকে ভয়েস মেসেজে বদলে দেয়।", "", "📘 ব্যবহারের নিয়ম (সবার জন্য)"]
+    lines += [line(n) for n in ("tts", "voices", "voicepreset", "replay", "history", "favs", "fav", "stats") if ok(n) and not (n == "voices" and c.type != "private")]
+    lines += ["", "🔐 প্যানেল অ্যাক্সেস চান?", "/request লিখে অনুরোধ পাঠান, তারপর অ্যাডমিনকে ইনবক্সে (DM) জানান। অনুমোদন পেলে প্রাইভেট চ্যাটে /panel লিখে প্যানেল খুলতে পারবেন।", "যোগাযোগ: @sakibXXL"]
+    adm = [line(n) for n, d, k in CMD_LIST if k == "admin" and ok(n) and admin_allowed(u.id, n)]
+    if adm: lines += ["", "🛡 অ্যাডমিন কমান্ড (শুধু আপনার জন্য)", "⚠️ চিহ্নিতগুলো সাবধানে ব্যবহার করুন।"] + adm
     await say(update, "\n".join(lines))
 
 async def start_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.effective_message.reply_text(
-        "Welcome to SAKIB Lite! 🎙\n\n"
-        "/tts <text> — Turn text into a voice message\n"
-        "/voicepreset <name> — Change the voice style\n"
-        "/voices — See the available voices\n"
-        "/replay — Replay your last voice"
+        "স্বাগতম! 🎙 আমি লেখাকে ভয়েস মেসেজে বদলে দিই।\n\n"
+        "• /tts আপনার লেখা — ভয়েস বানান\n"
+        "• /voices — ভয়েস বেছে নিন (প্রাইভেট চ্যাটে)\n"
+        "• /voicepreset — ভয়েসের স্টাইল বদলান\n"
+        "• /replay — শেষ ভয়েস আবার শুনুন\n\n"
+        "পুরো নিয়ম জানতে /help লিখুন। প্যানেল অ্যাক্সেস চাইলে /request লিখে অনুরোধ করুন এবং অ্যাডমিনকে DM করুন।"
     )
 
 async def about_cmd(update, ctx):
@@ -1424,7 +1498,7 @@ async def admins_cmd(update, ctx):
 async def removeadmin_cmd(update, ctx):
     if update.effective_user.id not in OWNERS: return await say(update, "⛔ Owner only.")
     if not ctx.args or not ctx.args[0].isdigit(): return await say(update, "Use: /removeadmin <user_id>")
-    db.get("admins", {}).pop(ctx.args[0], None); save(); await say(update, "🗑 Removed.")
+    db.get("admins", {}).pop(ctx.args[0], None); save(); refresh_soon(); await say(update, "🗑 Removed.")
 
 async def cb_admin(update, ctx):
     q = update.callback_query
@@ -1538,8 +1612,7 @@ async def post_init(app):
     app.bot_data["runner"] = runner
     app.bot_data["bg"] = asyncio.create_task(backup_loop(app.bot))
     app.bot_data["ka"] = asyncio.create_task(keepalive_loop())
-    try: await app.bot.set_my_commands([BotCommand(c, d) for c, d in COMMANDS])
-    except Exception: log.exception("set_my_commands failed")
+    await refresh_commands(app.bot)
     if WEBAPP_URL:
         await app.bot.set_chat_menu_button(menu_button=MenuButtonWebApp("⚙️ Panel", WebAppInfo(f"{WEBAPP_URL}/app")))
     log.info("Web server running on port %s", PORT)
